@@ -1,0 +1,313 @@
+/* นำเข้าฟอนต์ Prompt เพื่อความทันสมัย */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Prompt', sans-serif;
+  /* ใส่ภาพพื้นหลังวิทยาลัย */
+  background-image: url('https://asia.thaitec.ac.th/wp-content/uploads/2025/06/%E0%B8%A7%E0%B8%B4%E0%B8%97%E0%B8%A2%E0%B8%B2%E0%B8%A5%E0%B8%B1%E0%B8%A22-scaled.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #1a1a1a;
+}
+
+/* 🌟 เอฟเฟกต์ Liquid Glass (กระจกใส) */
+.glass-panel {
+  z-index: 1; /* ให้ค่าต่ำๆ ไว้ เพื่อไม่ให้มันมาบัง Navbar */
+  position: relative;
+  width: 100%; /* ให้กล่องขยายกว้างเต็มพื้นที่ main */
+  box-sizing: border-box; /* ป้องกัน Padding ทำให้กล่องล้น */
+  background: rgba(255, 255, 255, 0.75); /* ความใสของกระจก */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+/* 🌟 ปุ่มสีหลัก (Hot Pink ไป Blue) */
+.btn-primary {
+  background: linear-gradient(45deg, #FF1493, #007BFF);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-family: 'Prompt', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
+}
+
+/* กล่อง Input สไตล์กระจก */
+.glass-input {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  color: #333;
+  box-sizing: border-box; /* สำคัญมาก ป้องกันการขยายตัว */
+  transition: all 0.3s ease;
+  transform: none !important; /* ปิดการขยายขนาด */
+}
+
+.glass-input:focus {
+  outline: none;
+  background: #ffffff;
+  /* ใช้ box-shadow แทน border เพื่อสร้างเส้นขอบหนาๆ โดยไม่ดันหน้าจอ */
+  box-shadow: 0 0 0 2px #FF1493; 
+  border-color: transparent;
+  transform: none !important; /* ปิดการขยายขนาด */
+}
+
+.glass-input:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: none !important; /* ปิดการขยายขนาด */
+}
+
+/* สีตัวอักษร Gradient */
+.text-gradient {
+  background: linear-gradient(45deg, #FF1493, #007BFF);
+  -webkit-background-clip: text; /* สำหรับ Safari/Chrome */
+  background-clip: text;         /* เพิ่มบรรทัดนี้เข้ามา (คำสั่งมาตรฐาน) */
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}
+
+/* 🌟 ตารางสไตล์กระจก (Glass Table) */
+.glass-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  margin-top: 15px;
+}
+.glass-table th {
+  padding: 8px 4px;
+  font-size: 11px;
+  background: rgba(255, 20, 147, 0.15); /* สีชมพูใสๆ */
+  color: #0056b3; /* ตัวอักษรสีน้ำเงิน */
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  backdrop-filter: blur(5px);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+}
+.glass-table td {
+  background: rgba(255, 255, 255, 0.5); /* พื้นหลังขาวใส */
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  color: #333;
+}
+.glass-table tr:last-child td { border-bottom: none; }
+.glass-table tr:hover td { background: rgba(255, 255, 255, 0.8); }
+
+/* 🌟 ปุ่มเสริมต่างๆ */
+.btn-danger {
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+  color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(255, 65, 108, 0.3);
+}
+.btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 65, 108, 0.5); }
+
+.btn-success {
+  background: linear-gradient(45deg, #11998e, #38ef7d);
+  color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(17, 153, 142, 0.3);
+}
+.btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(17, 153, 142, 0.5); }
+
+/* ปุ่มเลือกห้อง (ไม่ได้เลือก vs เลือกแล้ว) */
+.btn-outline {
+  background: rgba(255, 255, 255, 0.6); color: #333; border: 1px solid rgba(0,0,0,0.1); border-radius: 20px; padding: 8px 15px; cursor: pointer; transition: 0.3s;
+}
+.btn-outline:hover { background: rgba(255, 255, 255, 0.9); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+.btn-active {
+  background: linear-gradient(45deg, #FF1493, #007BFF); color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(255, 20, 147, 0.3);
+}
+
+/* กล่องย่อยด้านใน */
+.glass-card {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 15px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
+}
+
+/* เพิ่มบรรทัดนี้ลงในไฟล์ App.css */
+button, input, select, textarea {
+  font-family: 'Prompt', sans-serif !important;
+}
+
+/* สำหรับ Heading ถ้ายังไม่เปลี่ยน ให้เพิ่มส่วนนี้ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Prompt', sans-serif !important;
+}
+
+/* Container หลักที่แบ่งหน้าจอ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* จัดให้อยู่กลางหน้าจอ */
+  width: 100%;
+}
+
+/* Main Content ให้ขยายพื้นที่เต็ม */
+.main-content {
+ flex: 1;
+  width: 100%;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+
+/* ลดขนาดฟอนต์ในตารางให้เล็กลง */
+.glass-table {
+  font-size: 0.85rem; /* ลดจากค่าปกติ */
+}
+
+/* ปรับปุ่มสถานะให้กระชับขึ้นและไม่ล้น */
+.status-btn-container {
+  display: flex;
+  flex-wrap: nowrap; /* ห้ามขึ้นบรรทัดใหม่ */
+  gap: 4px;         /* ลดระยะห่างระหว่างปุ่ม */
+  justify-content: center;
+}
+
+.status-btn-container button {
+  padding: 4px 8px !important; /* ลด padding ปุ่ม */
+  font-size: 0.75rem !important; /* ลดขนาดตัวอักษรบนปุ่ม */
+}
+
+/* สำหรับหน้าจอขนาดเล็ก (มือถือและแท็บเล็ตแนวตั้ง) */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column; /* เปลี่ยนจากซ้าย-ขวา เป็น บน-ล่าง */
+  }
+
+
+  .main-content {
+    width: 100%;
+    padding: 10px; /* ลด Padding ลง */
+  }
+
+  .glass-panel {
+    padding: 15px !important; /* ลดพื้นที่ว่างในกรอบขาว */
+  }
+
+  /* คลาสพิเศษสำหรับครอบตารางให้เลื่อนซ้ายขวาได้ */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto; /* โชว์ Scrollbar แนวนอนเฉพาะตาราง */
+    -webkit-overflow-scrolling: touch; /* ให้มือถือไถลื่นๆ */
+  }
+}
+
+.report-table tbody td {
+  transition: background-color 0.15s ease; /* ทำให้การเปลี่ยนสีดูนุ่มนวลขึ้น */
+}
+
+/* 1. ไฮไลท์สีเทาอ่อน "ทั้งแถว" เพื่อให้รู้ว่ากำลังดูของเด็กคนไหน */
+.report-table tbody tr:hover td {
+  background-color: #f1f5f9 !important; 
+}
+
+/* 2. ไฮไลท์สีเทาเข้มเฉพาะ "กล่อง/ช่อง" ที่เมาส์ชี้อยู่โดยตรง เพื่อให้ดูง่ายสุดๆ */
+.report-table tbody td:hover {
+  background-color: #cbd5e1 !important; 
+  cursor: crosshair; /* เปลี่ยนเมาส์เป็นเป้าเล็งเพื่อให้โฟกัสง่ายขึ้น */
+}
+
+/* เพิ่มเติมใน App.css */
+.report-table td {
+  white-space: normal !important; /* ยอมให้ข้อความขึ้นบรรทัดใหม่ได้ */
+  word-wrap: break-word !important; /* ตัดคำหากชื่อห้องหรือชื่อยาวเกินไป */
+  overflow-wrap: break-word !important;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.top-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px !important;
+  margin-bottom: 20px;
+  border-radius: 0 !important; /* ถ้าอยากได้ขอบมนให้ปรับได้ */
+  position: relative; /* หรือ fixed ถ้าอยากให้ติดขอบบนตลอด */
+  z-index: 1000;      /* ให้ค่าสูงไว้ก่อน */
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  z-index: 999;       /* เมนูต้องมีค่าใกล้เคียงกับ Navbar */
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.nav-link:hover {
+  background: rgba(255, 20, 147, 0.1);
+  color: #FF1493;
+}
+
+.admin-link {
+  color: #d10067;
+}
+
+.nav-divider {
+  color: #ccc;
+  margin: 0 5px;
+}
+
+.main-content {
+  padding: 0 30px;
+}
+
+.hamburger { display: none; font-size: 24px; border: none; background: none; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .hamburger { display: block; }
+  .desktop-only { display: none; }
+  .mobile-only { display: block; }
+  
+  .nav-links {
+    display: none; /* ซ่อนเมนูตอนเริ่ม */
+    flex-direction: column;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: rgba(255,255,255,0.95);
+    padding: 20px;
+    z-index: 100;
+  }
+  .nav-links.active { display: flex; }
+  .nav-divider { display: none; }
+}
+
+@media (min-width: 901px) {
+  .mobile-only { display: none; }
+}
