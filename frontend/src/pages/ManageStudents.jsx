@@ -87,9 +87,43 @@ function ManageStudents() {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      
+      {/* 📌 CSS เฉพาะสำหรับปรับย่อตารางบนมือถือ */}
+      <style>{`
+        @media (max-width: 600px) {
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+          }
+          .manage-table th, 
+          .manage-table td {
+            padding: 6px 2px !important;
+            font-size: 10.5px !important;
+            word-wrap: break-word;
+          }
+          .manage-table input, 
+          .manage-table select {
+            font-size: 10px !important;
+            padding: 2px !important;
+          }
+          .manage-table button {
+            font-size: 9px !important;
+            padding: 4px 6px !important;
+          }
+          .manage-table .badge-voc {
+            font-size: 9px !important;
+            padding: 2px 4px !important;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>จัดการข้อมูลนักเรียน</h2>
 
-      <form onSubmit={handleSubmit} className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '30px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* ใส่คลาส mobile-stack */}
+      <form onSubmit={handleSubmit} className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input className="glass-input" placeholder="รหัสนักเรียน" value={formData.student_id} onChange={(e) => setFormData({...formData, student_id: e.target.value})} required style={{ width: '130px', fontSize: '13px' }} />
         <input className="glass-input" placeholder="ชื่อ-นามสกุล" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} required style={{ flex: 1, minWidth: '180px', fontSize: '13px' }} />
         <input className="glass-input" placeholder="ห้องเรียน" value={formData.class_room} onChange={(e) => setFormData({...formData, class_room: e.target.value})} required style={{ width: '130px', fontSize: '13px' }} />
@@ -97,10 +131,11 @@ function ManageStudents() {
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#ff416c', fontSize: '14px' }}>
           <input type="checkbox" checked={formData.is_dual_voc} onChange={(e) => setFormData({...formData, is_dual_voc: e.target.checked})} /> ทวิภาคี
         </label>
-        <button type="submit" className="btn-success" style={{ padding: '8px 20px', fontSize: '14px' }}>➕ เพิ่มนักเรียน</button>
+        <button type="submit" className="btn-success" style={{ padding: '10px 15px', fontSize: '14px' }}>➕ เพิ่มนักเรียน</button>
       </form>
 
-      <div className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap' }}>
+      {/* ใส่คลาส mobile-stack */}
+      <div className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '20px', flexWrap: 'wrap' }}>
         <input placeholder="🔍 ค้นหารหัส, ชื่อ หรือ ห้องเรียน..." className="glass-input" onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: 1, minWidth: '200px', fontSize: '13px' }} />
         <select className="glass-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ minWidth: '180px', fontSize: '13px' }}>
           <option value="date_desc">วันที่เพิ่ม (ใหม่-เก่า)</option>
@@ -111,18 +146,21 @@ function ManageStudents() {
         </select>
       </div>
 
-      <div className="glass-panel" style={{ padding: '30px', background: '#ffffff', overflow: 'hidden' }}>
-        <div style={{ marginBottom: '20px', fontWeight: 'bold', color: '#FF1493' }}>พบข้อมูล: {processedStudents.length} ท่าน</div>
+      <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', overflow: 'hidden' }}>
+        <div style={{ marginBottom: '15px', fontWeight: 'bold', color: '#FF1493' }}>พบข้อมูล: {processedStudents.length} ท่าน</div>
+        
         <div className="table-responsive" style={{ width: '100%' }}>
-          <table className="report-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+          {/* ใส่คลาส manage-table */}
+          <table className="report-table manage-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
             <thead>
               <tr>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>รหัส</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '25%' }}>ชื่อ-นามสกุล</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '12%' }}>ห้องเรียน</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>วันที่เพิ่ม</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '10%' }}>สถานะ</th>
-                <th style={{ padding: '18px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', width: '23%' }}>จัดการ</th>
+                {/* ปรับสัดส่วนคอลัมน์ให้สมดุล */}
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>รหัส</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '28%' }}>ชื่อ-นามสกุล</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>ห้องเรียน</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>วันที่</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '12%' }}>สถานะ</th>
+                <th style={{ padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', width: '15%' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -130,21 +168,36 @@ function ManageStudents() {
                 const isEditing = editingId === s.student_id;
                 return (
                   <tr key={s.student_id} style={{ borderBottom: '1px solid #e5e7eb', background: s.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
-                    <td style={{ padding: '18px', textAlign: 'center', fontWeight: 'bold', overflow: 'visible' }}>{s.student_id}</td>
-                    <td style={{ padding: '18px' }}>{isEditing ? <input className="glass-input" value={editFormData.full_name} onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : s.full_name}</td>
-                    <td style={{ padding: '18px', textAlign: 'center', color: '#FF1493', fontWeight: 'bold' }}>{isEditing ? <input className="glass-input" value={editFormData.class_room} onChange={(e) => setEditFormData({...editFormData, class_room: e.target.value})} style={{ width: '100%', padding: '6px', textAlign: 'center' }} /> : renderRooms(s.class_room)}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>{new Date(s.created_at).toLocaleDateString('th-TH')}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>{isEditing ? <input type="checkbox" checked={editFormData.is_dual_voc} onChange={(e) => setEditFormData({...editFormData, is_dual_voc: e.target.checked})} /> : (s.is_dual_voc ? <span style={{ background: '#334155', color: '#fff', padding: '4px 8px', borderRadius: '12px', fontSize: '12px' }}>ทวิภาคี</span> : 'ปกติ')}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>
+                    <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', overflow: 'visible' }}>{s.student_id}</td>
+                    
+                    <td style={{ padding: '15px' }}>
+                      {isEditing ? <input className="glass-input" value={editFormData.full_name} onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : s.full_name}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center', color: '#FF1493', fontWeight: 'bold' }}>
+                      {isEditing ? <input className="glass-input" value={editFormData.class_room} onChange={(e) => setEditFormData({...editFormData, class_room: e.target.value})} style={{ width: '100%', padding: '6px', textAlign: 'center' }} /> : renderRooms(s.class_room)}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>{new Date(s.created_at).toLocaleDateString('th-TH')}</td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>
                       {isEditing ? (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 10px', fontSize: '12px' }}>บันทึก</button>
-                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 10px', fontSize: '12px' }}>ยกเลิก</button>
+                        <input type="checkbox" checked={editFormData.is_dual_voc} onChange={(e) => setEditFormData({...editFormData, is_dual_voc: e.target.checked})} /> 
+                      ) : (
+                        s.is_dual_voc ? <span className="badge-voc" style={{ background: '#334155', color: '#fff', padding: '4px 6px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap' }}>ทวิภาคี</span> : 'ปกติ'
+                      )}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✔</button>
+                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✖</button>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={() => handleEditClick(s)} className="btn-primary" style={{ padding: '6px 10px', fontSize: '12px' }}>แก้ไข</button>
-                          <button onClick={() => handleDelete(s.student_id)} className="btn-danger" style={{ padding: '6px 10px', fontSize: '12px' }}>ลบ</button>
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button onClick={() => handleEditClick(s)} className="btn-primary" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✏️</button>
+                          <button onClick={() => handleDelete(s.student_id)} className="btn-danger" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>🗑️</button>
                         </div>
                       )}
                     </td>
@@ -158,4 +211,5 @@ function ManageStudents() {
     </div>
   )
 }
+
 export default ManageStudents

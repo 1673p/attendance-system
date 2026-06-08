@@ -28,21 +28,17 @@ function AttendanceReport({ user }) {
 
   const filteredSubjects = useMemo(() => subjects.filter(s => selectedTeacher === '' || s.teacher_code === selectedTeacher), [subjects, selectedTeacher])
 
-  // ดึงรายชื่อห้องทั้งหมดสำรองไว้
   const allAvailableRooms = useMemo(() => {
     return [...new Set(students.map(s => s.class_room).filter(Boolean))].sort()
   }, [students])
 
-  // ดึงรายชื่อห้องเฉพาะวิชาที่เลือก
   const availableRoomsForSubject = useMemo(() => {
     if (!selectedSubject) return [];
     const subject = subjects.find(s => s.subject_code === selectedSubject);
     
-    // ถ้าวิชานั้นมีการระบุห้องเรียนไว้ ให้ตัดคำด้วย , แล้วนำมาแสดง
     if (subject && subject.class_rooms) {
        return subject.class_rooms.split(',').map(r => r.trim()).filter(Boolean).sort();
     }
-    // ถ้าไม่ได้ระบุห้องเรียนในวิชา ให้แสดงห้องทั้งหมดแทน
     return allAvailableRooms;
   }, [selectedSubject, subjects, allAvailableRooms]);
 
@@ -147,9 +143,49 @@ function AttendanceReport({ user }) {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      
+      {/* 📌 ควบคุม Layout ให้เป็น Column เฉพาะบนมือถือ */}
+      <style>{`
+        .th-sticky-name {
+          position: sticky;
+          left: 100px;
+          z-index: 10;
+          min-width: 220px;
+        }
+        .td-sticky-name {
+          position: sticky;
+          left: 100px;
+          z-index: 5;
+        }
+
+        @media (max-width: 600px) {
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+            margin-left: 0 !important;
+          }
+          .export-container button {
+            width: 100% !important;
+          }
+          .hide-on-mobile {
+            display: none !important;
+          }
+          .th-sticky-name, .td-sticky-name {
+            left: 0 !important;
+            min-width: 140px !important;
+            width: 140px !important;
+            white-space: normal;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>สรุปผลการเช็คชื่อ</h2>
       
-      <div className="glass-panel" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* แก้ไขให้กลับมาใช้ display: flex แนวนอน (flexWrap: wrap) ปกติบนจอคอม */}
+      <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
@@ -163,7 +199,7 @@ function AttendanceReport({ user }) {
         
         <select className="glass-input" value={selectedSubject} onChange={(e) => {
           setSelectedSubject(e.target.value);
-          setSelectedRoomFilter(''); // รีเซ็ตห้องเรียนเมื่อเปลี่ยนวิชา
+          setSelectedRoomFilter(''); 
           setHasSearched(false);
           setLogs([]);
         }} style={{ flex: 1 }}>
@@ -171,7 +207,6 @@ function AttendanceReport({ user }) {
             {filteredSubjects.map(s => <option key={s.subject_code} value={s.subject_code}>{s.subject_name}</option>)}
         </select>
 
-        {/* ห้องเรียนจะถูกกรองตามวิชาที่เลือก */}
         <select className="glass-input" value={selectedRoomFilter} onChange={(e) => setSelectedRoomFilter(e.target.value)} style={{ width: 'auto', minWidth: '150px' }} disabled={!selectedSubject}>
           <option value="">-- เลือกห้องเรียน --</option>
           {availableRoomsForSubject.map(r => (
@@ -179,14 +214,14 @@ function AttendanceReport({ user }) {
           ))}
         </select>
         
-        <button onClick={fetchReport} className="btn-primary" style={{ padding: '10px 20px' }}>ประมวลผล</button>
+        <button onClick={fetchReport} className="btn-primary" style={{ padding: '10px 20px', fontSize: '1rem' }}>ประมวลผล</button>
         
         {reportData && selectedRoomFilter && (
-            <div style={{ marginLeft: 'auto' }}>
-                <button onClick={exportExcel} className="btn-success" style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
-                  Export Excel
-                </button>
-            </div>
+          <div className="export-container" style={{ marginLeft: 'auto' }}>
+            <button onClick={exportExcel} className="btn-success" style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+              Export Excel
+            </button>
+          </div>
         )}
       </div>
 
@@ -210,17 +245,17 @@ function AttendanceReport({ user }) {
               <h4 style={{ margin: '20px 20px 15px 20px', color: '#FF1493', fontSize: '1.2rem', textAlign: 'center' }}>ห้องเรียน: {room}</h4>
               <div className="table-responsive" style={{ overflowX: 'auto', width: '100%', paddingBottom: '10px' }}>
                 
-                <table className="report-table" style={{ minWidth: '1000px', width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+                <table className="report-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
                   <thead>
                     <tr>
-                      {/* ปรับขนาดและ Padding ส่วนหัวตารางให้กว้างขึ้นและไม่อึดอัด */}
-                      <th rowSpan="2" style={{ position: 'sticky', left: 0, zIndex: 10, border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center', minWidth: '100px' }}>รหัส</th>
-                      <th rowSpan="2" style={{ position: 'sticky', left: '100px', zIndex: 10, border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center', minWidth: '220px' }}>ชื่อ-นามสกุล</th>
+                      <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, minWidth: '100px', border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>รหัส</th>
+                      
+                      <th rowSpan="2" className="th-sticky-name" style={{ border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>ชื่อ-นามสกุล</th>
                       
                       {roomObj.dates.map((d, i) => {
                         const sampleLog = roomObj.students.find(s => s.dateColumns[i].createdAt)?.dateColumns[i];
                         return (
-                          <th key={d} rowSpan="2" style={{ border: '1px solid #d1d5db', padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '100px' }}>
+                          <th key={d} rowSpan="2" style={{ border: '1px solid #d1d5db', padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '90px' }}>
                             {d} <br/>
                             <small style={{ fontWeight: 'normal', color: '#6b7280' }}>({sampleLog?.batchTime || '-'})</small>
                             {sampleLog?.createdAt && (
@@ -234,16 +269,17 @@ function AttendanceReport({ user }) {
                       <th colSpan="2" style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
                     </tr>
                     <tr>
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563' }}>มา/ลา</th>
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563' }}>ขาด</th>
+                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>มา/ลา</th>
+                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>ขาด</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roomObj.students.map(s => (
                       <tr key={s.student_id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                        {/* ปรับ Padding ในเซลล์ให้กว้างขึ้นและไม่อึดอัด */}
-                        <td style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
-                        <td style={{ position: 'sticky', left: '100px', zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
+                        
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
+                        
+                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
                         
                         {s.dateColumns.map((val, i) => (
                           <td key={i} style={{ 

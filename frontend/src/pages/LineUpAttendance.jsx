@@ -32,7 +32,6 @@ function LineUpAttendance({ user }) {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      // ดึงคอลัมน์ is_dual_voc มาด้วย
       const { data } = await supabase.from('students').select('*').order('class_room').order('student_id');
       setStudents(data || []);
     };
@@ -42,20 +41,12 @@ function LineUpAttendance({ user }) {
   const allRooms = useMemo(() => [...new Set(students.map(s => s.class_room).filter(Boolean))], [students]);
   const filteredStudents = useMemo(() => selectedRoom === '' ? [] : students.filter(s => s.class_room === selectedRoom), [students, selectedRoom]);
 
-  // ✅ ระบบดึงสิทธิ์การมองเห็นห้องจาก Database (user.advisory_room)
   const allowedRooms = useMemo(() => {
-    // 1. ถ้าเป็น Admin ให้เห็นทุกห้อง
     if (user?.role === 'admin') return allRooms;
-
-    // 2. ถ้าครูคนนี้ไม่มีข้อมูลห้องประจำชั้นใน Database เลย ให้คืนค่าว่าง
     if (!user?.advisory_room) return [];
-
-    // 3. นำข้อมูลจาก Database เช่น "ปวช.1/1, ปวช.1/2" มาแยกด้วยลูกน้ำ และตัดช่องว่างทิ้ง
     const myRooms = user.advisory_room
       .split(',')
       .map(r => r.trim().replace(/\s+/g, ''));
-
-    // 4. เทียบกับห้องที่มีอยู่จริงในระบบ
     return allRooms.filter(room => myRooms.includes(room.replace(/\s+/g, '')));
   }, [allRooms, user]);
 
@@ -97,7 +88,6 @@ function LineUpAttendance({ user }) {
 
     const logsToSave = [];
     filteredStudents.forEach(stu => {
-      // 📌 ข้ามการเซฟข้อมูลสำหรับเด็กทวิภาคี
       if (stu.is_dual_voc) return;
 
       LINEUP_DATES.forEach(d => {
@@ -133,7 +123,6 @@ function LineUpAttendance({ user }) {
     const wsData = filteredStudents.map(stu => {
       let row = { 'รหัส': stu.student_id, 'ชื่อ-นามสกุล': stu.full_name };
       
-      // 📌 ถ้าเป็นทวิภาคีให้แสดงค่าว่าง หรือคำว่า ทวิภาคี
       if (stu.is_dual_voc) {
         LINEUP_DATES.forEach(d => {
           row[d.date] = '-';
@@ -172,7 +161,8 @@ function LineUpAttendance({ user }) {
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบเช็คแถวหน้าเสาธง</h2>
 
-      <div className="glass-panel" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* เพิ่ม className="score-filters" เพื่อให้จัดเรียงลงมาทีละบรรทัดเฉพาะบนมือถือ */}
+      <div className="glass-panel score-filters" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontWeight: 'bold' }}>เลือกห้องเพื่อลงข้อมูล:</span>
         
         {allowedRooms.length === 0 && user?.role !== 'admin' ? (
@@ -189,8 +179,9 @@ function LineUpAttendance({ user }) {
         )}
 
         {selectedRoom && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
-             <button onClick={handleExportExcel} className="btn-success" style={{ padding: '10px 20px', borderRadius: '8px' }}>Export Excel</button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', width: '100%' }}>
+             {/* ให้ปุ่ม Export ขยายเต็มในมือถือ */}
+             <button onClick={handleExportExcel} className="btn-success" style={{ padding: '10px 20px', borderRadius: '8px', flex: 1 }}>Export Excel</button>
           </div>
         )}
       </div>
@@ -200,12 +191,14 @@ function LineUpAttendance({ user }) {
       ) : selectedRoom && filteredStudents.length > 0 ? (
         <div className="glass-panel" style={{ padding: '0', background: '#ffffff', overflow: 'hidden' }}>
           <div className="table-responsive" style={{ overflowX: 'auto', width: '100%', paddingBottom: '10px' }}>
-            {/* เพิ่มคลาส report-table เพื่อให้รองรับ CSS ไฮไลท์ตาราง */}
             <table className="report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e5e7eb' }}>
               <thead>
                 <tr>
-                  <th rowSpan="2" style={{ position: 'sticky', left: 0, zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '80px' }}>รหัส</th>
-                  <th rowSpan="2" style={{ position: 'sticky', left: '80px', zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '200px' }}>ชื่อ-นามสกุล</th>
+                  {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
+                  <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '80px' }}>รหัส</th>
+                  
+                  {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย th-sticky-name */}
+                  <th rowSpan="2" className="th-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '200px' }}>ชื่อ-นามสกุล</th>
                   
                   {LINEUP_DATES.map((d, i) => (
                     <th key={i} style={{ border: '1px solid #d1d5db', padding: '6px', backgroundColor: d.isHoliday ? '#fecaca' : '#eff6ff', color: d.isHoliday ? '#991b1b' : '#1e3a8a', textAlign: 'center', minWidth: '60px' }}>
@@ -232,14 +225,15 @@ function LineUpAttendance({ user }) {
               <tbody>
                 {filteredStudents.map(stu => {
                   
-                  // 📌 ถ้านักเรียนเป็นระบบทวิภาคี ให้ข้ามการวาดช่อง Dropdown เปลี่ยนเป็นข้อความยาวแทน
                   if (stu.is_dual_voc) {
                     return (
                       <tr key={stu.student_id} style={{ borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
-                        <td style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#64748b' }}>{stu.student_id}</td>
-                        <td style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', color: '#64748b', fontWeight: '500' }}>{stu.full_name}</td>
+                        {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#64748b' }}>{stu.student_id}</td>
                         
-                        {/* รวมทุกช่องที่เหลือเข้าด้วยกัน (วันที่ 70 คอลัมน์ + สรุป 3 คอลัมน์) */}
+                        {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย td-sticky-name */}
+                        <td className="td-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', color: '#64748b', fontWeight: '500' }}>{stu.full_name}</td>
+                        
                         <td colSpan={LINEUP_DATES.length + 3} style={{ border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', fontWeight: 'bold' }}>
                            นักเรียนระบบทวิภาคี (ไม่ต้องเช็คแถว)
                         </td>
@@ -247,14 +241,16 @@ function LineUpAttendance({ user }) {
                     );
                   }
 
-                  // 📌 ถ้านักเรียนระบบปกติ ทำงานตามปกติ
                   let presentCount = 0;
                   let absentCount = 0;
 
                   return (
                     <tr key={stu.student_id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <td style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#374151' }}>{stu.student_id}</td>
-                      <td style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', color: '#374151', fontWeight: '500' }}>{stu.full_name}</td>
+                      {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
+                      <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#374151' }}>{stu.student_id}</td>
+                      
+                      {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย td-sticky-name */}
+                      <td className="td-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', color: '#374151', fontWeight: '500' }}>{stu.full_name}</td>
                       
                       {LINEUP_DATES.map((d, i) => {
                         if (d.isHoliday) {

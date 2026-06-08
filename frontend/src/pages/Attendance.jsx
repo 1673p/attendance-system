@@ -20,7 +20,6 @@ function Attendance({ user }) {
     const fetchData = async () => {
       const { data: teaData } = await supabase.from('teachers').select('*').order('full_name')
       const { data: subData } = await supabase.from('subjects').select('*')
-      // สมมติว่าดึง is_dual_voc มาด้วยจากการ select('*')
       const { data: stuData } = await supabase.from('students').select('*').order('class_room')
       setTeachers(teaData || []); setSubjects(subData || []); setStudents(stuData || [])
     }
@@ -32,7 +31,6 @@ function Attendance({ user }) {
   
   const filteredStudents = useMemo(() => selectedRoom === '' ? [] : students.filter(s => s.class_room === selectedRoom), [students, selectedRoom])
 
-  // กรองห้องเรียนตาม "วิชาที่ถูกเลือก"
   const allowedRoomsForSubject = useMemo(() => {
     if (!selectedSubject) return [];
     
@@ -49,7 +47,6 @@ function Attendance({ user }) {
     if (!selectedDate || !selectedTeacher || !selectedSubject) return alert("กรุณาเลือกข้อมูลให้ครบ")
     if (!selectedRoom) return alert("กรุณาเลือกห้องเรียน")
     
-    // นับเฉพาะเด็ก "ปกติ" ที่ต้องเช็คชื่อ (ไม่รวมทวิภาคี)
     const studentsToAttend = filteredStudents.filter(s => !s.is_dual_voc);
     if (Object.keys(attendance).length < studentsToAttend.length) return alert(`เช็คชื่อยังไม่ครบ!`)
     
@@ -86,10 +83,23 @@ function Attendance({ user }) {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      
+      <style>{`
+        @media (max-width: 600px) {
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบเช็คชื่อเข้าเรียน</h2>
       
       {!isPreview && (
-        <div className="glass-panel" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
           <input type="date" className="glass-input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
           
           <select className="glass-input" value={selectedTeacher} onChange={(e) => { setSelectedTeacher(e.target.value); setSelectedSubject(''); setSelectedRoom(''); setAttendance({}); }} disabled={user?.role !== 'admin'}>
@@ -125,7 +135,6 @@ function Attendance({ user }) {
             </span>
           </div>
 
-          {/* แถบคำอธิบายสถานะการเช็คชื่อ */}
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '15px', fontSize: '13.5px', background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#334155' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#11998e' }}></span> 
@@ -141,33 +150,31 @@ function Attendance({ user }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#333333' }}></span> 
-              <strong>ละเว้น:</strong> นักเรียนที่จบ ปวช. มา ไม่ต้องเรียนวิชานี้ หรือ เทียบโอน
+              <strong>ละเว้น:</strong> นักเรียนที่จบ ปวช. มา ไม่ต้องเรียนวิชานี้
             </div>
           </div>
 
           <div className="table-responsive" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="glass-table" style={{ width: '100%', minWidth: '650px' }}>
+            <table className="glass-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th>รหัส</th>
+                  <th className="hide-on-mobile">รหัส</th>
                   <th>ชื่อ-นามสกุล</th>
-                  <th style={{textAlign: 'center'}}>ห้อง</th>
+                  <th className="hide-on-mobile" style={{textAlign: 'center'}}>ห้อง</th>
                   <th style={{textAlign: 'center'}}>สถานะ</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudents.map(stu => (
                   <tr key={stu.student_id} style={{ background: stu.is_dual_voc ? '#f1f5f9' : 'transparent', opacity: stu.is_dual_voc ? 0.7 : 1 }}>
-                    <td>{stu.student_id}</td>
+                    <td className="hide-on-mobile">{stu.student_id}</td>
                     <td style={{ fontWeight: '500' }}>{stu.full_name}</td>
-                    <td style={{ textAlign: 'center', color: '#FF1493', fontWeight: 'bold' }}>{stu.class_room}</td>
+                    <td className="hide-on-mobile" style={{ textAlign: 'center', color: '#FF1493', fontWeight: 'bold' }}>{stu.class_room}</td>
                     <td style={{ textAlign: 'center' }}>
-                      {/* ถ้านักเรียนเป็นทวิภาคี ล็อกไม่ให้กดเช็คชื่อ */}
                       {stu.is_dual_voc ? (
                         <span style={{ color: '#64748b', fontStyle: 'italic', fontWeight: 'bold', fontSize: '13px' }}>นักเรียนทวิภาคี (ไม่ต้องเช็ค)</span>
                       ) : (
                         <div className="status-btn-container">
-                          {/* เพิ่มปุ่ม 'ละเว้น' เข้าไปในลูป */}
                           {['มา', 'ลา', 'ขาด', 'ละเว้น'].map(s => {
                             const isActive = attendance[stu.student_id] === s;
                             let activeStyle = {};
@@ -201,7 +208,6 @@ function Attendance({ user }) {
         </div>
       )}
 
-      {/* หน้าพรีวิว */}
       {isPreview && (
         <div className="glass-panel" style={{ padding: '30px' }}>
           <h3 className="text-gradient" style={{ textAlign: 'center' }}>พรีวิวการเช็คชื่อ</h3>

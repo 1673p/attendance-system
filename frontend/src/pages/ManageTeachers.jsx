@@ -76,7 +76,6 @@ function ManageTeachers() {
       })
   }, [teachers, searchTerm, sortBy])
 
-  // ฟังก์ชันแยกห้องและใส่ <br /> เมื่อเจอเครื่องหมายคอมม่า
   const renderRooms = (rooms) => {
     if (!rooms) return '-';
     return rooms.split(',').map((room, index) => (
@@ -86,17 +85,48 @@ function ManageTeachers() {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      
+      {/* 📌 ใส่สไตล์เฉพาะสำหรับมือถือในหน้านี้เลย */}
+      <style>{`
+        @media (max-width: 600px) {
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+          }
+          .manage-table th, 
+          .manage-table td {
+            padding: 6px 2px !important;
+            font-size: 10.5px !important;
+            word-wrap: break-word;
+          }
+          .manage-table input, 
+          .manage-table select {
+            font-size: 10px !important;
+            padding: 2px !important;
+          }
+          .manage-table button {
+            font-size: 9px !important;
+            padding: 4px 6px !important;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>จัดการข้อมูลอาจารย์</h2>
 
-      <form onSubmit={handleSubmit} className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* เพิ่มคลาส mobile-stack */}
+      <form onSubmit={handleSubmit} className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input name="teacher_code" className="glass-input" placeholder="รหัสอาจารย์" value={formData.teacher_code} onChange={(e) => setFormData({...formData, teacher_code: e.target.value})} required style={{ width: '130px', fontSize: '13px' }} />
         <input name="full_name" className="glass-input" placeholder="ชื่อ-นามสกุล" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} required style={{ flex: 1, minWidth: '180px', fontSize: '13px' }} />
         <input name="password" type="password" className="glass-input" placeholder="ตั้งรหัสผ่าน" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required style={{ width: '130px', fontSize: '13px' }} />
-        <input name="advisory_room" className="glass-input" placeholder="ห้องประจำชั้น" value={formData.advisory_room} onChange={(e) => setFormData({...formData, advisory_room: e.target.value})} style={{ width: '150px', fontSize: '13px' }} />
-        <button type="submit" className="btn-success" style={{ padding: '8px 15px', fontSize: '14px' }}>➕ เพิ่มอาจารย์</button>
+        <input name="advisory_room" className="glass-input" placeholder="ห้อง (เช่น ปวช.1/1)" value={formData.advisory_room} onChange={(e) => setFormData({...formData, advisory_room: e.target.value})} style={{ width: '150px', fontSize: '13px' }} />
+        <button type="submit" className="btn-success" style={{ padding: '10px 15px', fontSize: '14px' }}>➕ เพิ่มอาจารย์</button>
       </form>
 
-      <div className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '20px', flexWrap: 'wrap' }}>
+      {/* เพิ่มคลาส mobile-stack */}
+      <div className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '20px', flexWrap: 'wrap' }}>
         <input placeholder="🔍 ค้นหารหัส หรือ ชื่ออาจารย์..." className="glass-input" onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: 1, minWidth: '200px', fontSize: '13px' }} />
         <select className="glass-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ minWidth: '180px', fontSize: '13px' }}>
           <option value="date_desc">วันที่เพิ่ม (ใหม่ ไป เก่า)</option>
@@ -106,22 +136,23 @@ function ManageTeachers() {
         </select>
       </div>
 
-      {/* เพิ่ม Padding ด้านใน container ตารางเพื่อไม่ให้อึดอัด */}
-      <div className="glass-panel" style={{ padding: '30px', background: '#ffffff', overflow: 'hidden' }}>
+      <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', overflow: 'hidden' }}>
         <div style={{ marginBottom: '15px', fontWeight: 'bold', color: '#FF1493' }}>
           พบข้อมูล: {processedTeachers.length} ท่าน
         </div>
         
         <div className="table-responsive" style={{ width: '100%' }}>
-          <table className="report-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+          {/* เพิ่มคลาส manage-table */}
+          <table className="report-table manage-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
             <thead>
               <tr>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '10%' }}>รหัส</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '25%' }}>ชื่อ-นามสกุล</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>ห้อง</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>วันที่เพิ่ม</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '10%' }}>สิทธิ์</th>
-                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', width: '25%' }}>จัดการ</th>
+                {/* ปรับสัดส่วน width ให้พอดี */}
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '13%' }}>รหัส</th>
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '28%' }}>ชื่อ-นามสกุล</th>
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '17%' }}>ห้อง</th>
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>วันที่</th>
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '12%' }}>สิทธิ์</th>
+                <th style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', width: '15%' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -130,25 +161,35 @@ function ManageTeachers() {
                 return (
                   <tr key={t.teacher_code} style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>{t.teacher_code}</td>
-                    <td style={{ border: '1px solid #e5e7eb', padding: '15px' }}>{isEditing ? <input className="glass-input" value={editFormData.full_name} onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : t.full_name}</td>
                     
-                    {/* ใช้ฟังก์ชัน renderRooms เพื่อตัดบรรทัดเมื่อเจอ , */}
+                    <td style={{ border: '1px solid #e5e7eb', padding: '15px' }}>
+                      {isEditing ? <input className="glass-input" value={editFormData.full_name} onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : t.full_name}
+                    </td>
+                    
                     <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', color: '#FF1493', fontWeight: '500' }}>
                       {isEditing ? <input className="glass-input" value={editFormData.advisory_room} onChange={(e) => setEditFormData({...editFormData, advisory_room: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : renderRooms(t.advisory_room)}
                     </td>
                     
                     <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center' }}>{new Date(t.created_at).toLocaleDateString('th-TH')}</td>
-                    <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center' }}><span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '11px', background: t.role === 'admin' ? '#ffeb3b' : '#e9ecef' }}>{t.role === 'admin' ? 'Admin' : 'Teacher'}</span></td>
+                    
+                    <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center' }}>
+                      <span style={{ padding: '4px 6px', borderRadius: '12px', fontSize: '10px', background: t.role === 'admin' ? '#ffeb3b' : '#e9ecef', whiteSpace: 'nowrap' }}>
+                        {t.role === 'admin' ? 'Admin' : 'Teacher'}
+                      </span>
+                    </td>
+                    
                     <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center' }}>
                       {isEditing ? (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 10px', fontSize: '12px' }}>บันทึก</button>
-                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 10px', fontSize: '12px' }}>ยกเลิก</button>
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          {/* เปลี่ยนปุ่มเป็นไอคอน */}
+                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✔</button>
+                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✖</button>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={() => handleEditClick(t)} className="btn-primary" style={{ padding: '6px 10px', fontSize: '12px' }}>แก้ไข</button>
-                          <button onClick={() => handleDelete(t.teacher_code)} className="btn-danger" style={{ padding: '6px 10px', fontSize: '12px' }} disabled={t.role === 'admin'}>ลบ</button>
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          {/* เปลี่ยนปุ่มเป็นไอคอน */}
+                          <button onClick={() => handleEditClick(t)} className="btn-primary" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✏️</button>
+                          <button onClick={() => handleDelete(t.teacher_code)} className="btn-danger" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }} disabled={t.role === 'admin'}>🗑️</button>
                         </div>
                       )}
                     </td>

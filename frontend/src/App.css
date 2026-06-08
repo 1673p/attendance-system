@@ -311,3 +311,71 @@ h1, h2, h3, h4, h5, h6 {
 @media (min-width: 901px) {
   .mobile-only { display: none; }
 }
+
+@media (max-width: 600px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  table {
+    width: 100%; /* ให้ตารางกางเต็มจอ */
+    font-size: 14px; /* ปรับขนาดตัวอักษรให้เล็กลงเพื่อให้ดูง่ายบนมือถือ */
+  }
+}
+
+/* จัดการส่วนหัวและเนื้อหาตารางแบบ Sticky */
+.th-sticky-name {
+  position: sticky;
+  left: 100px; /* หลบให้คอลัมน์รหัส */
+  z-index: 10;
+  min-width: 220px;
+}
+
+.td-sticky-name {
+  position: sticky;
+  left: 100px;
+  z-index: 5;
+}
+
+/* สำหรับจอมือถือ (ซ่อนรหัส และ ขยับคอลัมน์ชื่อ) */
+@media (max-width: 600px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* เมื่อคอลัมน์รหัสหายไป คอลัมน์ชื่อต้องขยับมาชิดซ้ายสุด และแคบลง */
+  .th-sticky-name, .td-sticky-name {
+    left: 0 !important;
+    min-width: 140px !important; /* ปรับให้แคบลงจาก 220px */
+    width: 140px !important;
+    white-space: normal; /* ยอมให้ชื่อยาวๆ ปัดบรรทัดลงมาได้ จะได้ไม่กินที่ */
+  }
+}
+
+
+/* จัดเรียง Dropdown */
+.score-filters {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ตั้งค่าสำหรับหน้าจอมือถือ */
+@media (max-width: 600px) {
+  /* บังคับให้ตัวกรองเรียงลงมาทีละบรรทัดบนมือถือ */
+  .score-filters {
+    flex-direction: column;
+  }
+  
+  .score-filters > * {
+    width: 100% !important; /* ให้แต่ละ Dropdown กว้างเต็มจอ */
+  }
+
+  /* ใช้คลาส .hide-on-mobile ที่เรามีอยู่แล้ว เพื่อซ่อนคอลัมน์รหัสและห้อง */
+  .hide-on-mobile {
+    display: none !important;
+  }
+}

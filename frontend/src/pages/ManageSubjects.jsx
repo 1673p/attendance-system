@@ -74,20 +74,55 @@ function ManageSubjects() {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      {/* 📌 ใส่สไตล์เฉพาะสำหรับมือถือในหน้านี้เลย เพื่อให้ตารางเล็กลงพอดีจอ */}
+      <style>{`
+        @media (max-width: 600px) {
+          /* ทำให้ฟอร์มและตัวกรองเรียงบรรทัดกัน */
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+          }
+
+          /* ย่อขนาดตารางให้เห็นครบทั้งหมด */
+          .manage-table th, 
+          .manage-table td {
+            padding: 6px 2px !important; /* ลดระยะขอบซ้ายขวาให้เหลือน้อยที่สุด */
+            font-size: 10.5px !important; /* เล็กลงแต่ยังอ่านได้ */
+            word-wrap: break-word; /* ยอมให้คำยาวๆ ปัดบรรทัดได้ */
+          }
+
+          /* ย่อขนาดช่องกรอกและปุ่มในตารางตอนกด 'แก้ไข' */
+          .manage-table input, 
+          .manage-table select {
+            font-size: 10px !important;
+            padding: 2px !important;
+          }
+          .manage-table button {
+            font-size: 9px !important;
+            padding: 4px 6px !important;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>จัดการรายวิชา</h2>
 
-      <form onSubmit={handleSubmit} className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '30px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* เพิ่มคลาส mobile-stack */}
+      <form onSubmit={handleSubmit} className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input className="glass-input" placeholder="รหัสวิชา" value={formData.subject_code} onChange={(e) => setFormData({...formData, subject_code: e.target.value})} required style={{ width: '120px', fontSize: '13px' }} />
         <input className="glass-input" placeholder="ชื่อวิชา" value={formData.subject_name} onChange={(e) => setFormData({...formData, subject_name: e.target.value})} required style={{ flex: 1, minWidth: '150px', fontSize: '13px' }} />
         <select className="glass-input" value={formData.teacher_code} onChange={(e) => setFormData({...formData, teacher_code: e.target.value})} required style={{ minWidth: '150px', fontSize: '13px' }}>
           <option value="">-- เลือกอาจารย์ --</option>
           {teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}
         </select>
-        <input className="glass-input" placeholder="ห้อง (เช่น ปวช.1/1, ปวช.1/2)" value={formData.class_rooms} onChange={(e) => setFormData({...formData, class_rooms: e.target.value})} style={{ minWidth: '180px', fontSize: '13px' }} />
-        <button type="submit" className="btn-success" style={{ padding: '8px 20px', fontSize: '14px' }}>➕ เพิ่มวิชา</button>
+        <input className="glass-input" placeholder="ห้อง (เช่น ปวช.1/1)" value={formData.class_rooms} onChange={(e) => setFormData({...formData, class_rooms: e.target.value})} style={{ minWidth: '180px', fontSize: '13px' }} />
+        <button type="submit" className="btn-success" style={{ padding: '10px 20px', fontSize: '14px' }}>➕ เพิ่มวิชา</button>
       </form>
 
-      <div className="glass-panel" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap' }}>
+      {/* เพิ่มคลาส mobile-stack */}
+      <div className="glass-panel mobile-stack" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '25px', flexWrap: 'wrap' }}>
         <input placeholder="🔍 ค้นหารหัส หรือ ชื่อวิชา..." className="glass-input" onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: 1, minWidth: '200px', fontSize: '13px' }} />
         <select className="glass-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ minWidth: '180px', fontSize: '13px' }}>
           <option value="date_desc">วันที่เพิ่ม (ใหม่ ไป เก่า)</option>
@@ -97,19 +132,21 @@ function ManageSubjects() {
         </select>
       </div>
 
-      {/* เพิ่ม padding ในส่วนกล่องตาราง */}
-      <div className="glass-panel" style={{ padding: '30px', background: '#ffffff', overflow: 'hidden' }}>
-        <div style={{ marginBottom: '20px', fontWeight: 'bold', color: '#FF1493' }}>พบข้อมูล: {processedSubjects.length} วิชา</div>
+      <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', overflow: 'hidden' }}>
+        <div style={{ marginBottom: '15px', fontWeight: 'bold', color: '#FF1493' }}>พบข้อมูล: {processedSubjects.length} วิชา</div>
+        
         <div className="table-responsive" style={{ width: '100%' }}>
-          <table className="report-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+          {/* เพิ่มคลาส manage-table เพื่อให้ CSS ด้านบนทำงาน */}
+          <table className="report-table manage-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
             <thead>
               <tr>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '12%' }}>รหัส</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '28%' }}>ชื่อวิชา</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '18%' }}>ห้องที่สอน</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '18%' }}>ผู้สอน</th>
-                <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '12%' }}>วันที่เพิ่ม</th>
-                <th style={{ padding: '18px', backgroundColor: '#fdf2f8', textAlign: 'center', width: '12%' }}>จัดการ</th>
+                {/* ปรับสัดส่วนคอลัมน์เล็กน้อยให้ลงตัวขึ้นบนจอมือถือ */}
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '13%' }}>รหัส</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '25%' }}>ชื่อวิชา</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '20%' }}>ห้อง</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '17%' }}>ผู้สอน</th>
+                <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', width: '13%' }}>วันที่</th>
+                <th style={{ padding: '15px', backgroundColor: '#fdf2f8', textAlign: 'center', width: '12%' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -117,21 +154,32 @@ function ManageSubjects() {
                 const isEditing = editingId === sub.subject_code;
                 return (
                   <tr key={sub.subject_code} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td style={{ padding: '18px', textAlign: 'center', fontWeight: 'bold' }}>{sub.subject_code}</td>
-                    <td style={{ padding: '18px' }}>{isEditing ? <input className="glass-input" value={editFormData.subject_name} onChange={(e) => setEditFormData({...editFormData, subject_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : sub.subject_name}</td>
-                    <td style={{ padding: '18px', textAlign: 'center', color: '#FF1493', fontWeight: '500' }}>{isEditing ? <input className="glass-input" value={editFormData.class_rooms} onChange={(e) => setEditFormData({...editFormData, class_rooms: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : renderRooms(sub.class_rooms)}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>{isEditing ? <select className="glass-input" value={editFormData.teacher_code} onChange={(e) => setEditFormData({...editFormData, teacher_code: e.target.value})} style={{ width: '100%' }}>{teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}</select> : sub.teachers?.full_name || '-'}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>{new Date(sub.created_at).toLocaleDateString('th-TH')}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>
+                    <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>{sub.subject_code}</td>
+                    
+                    <td style={{ padding: '15px' }}>
+                      {isEditing ? <input className="glass-input" value={editFormData.subject_name} onChange={(e) => setEditFormData({...editFormData, subject_name: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : sub.subject_name}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center', color: '#FF1493', fontWeight: '500' }}>
+                      {isEditing ? <input className="glass-input" value={editFormData.class_rooms} onChange={(e) => setEditFormData({...editFormData, class_rooms: e.target.value})} style={{ width: '100%', padding: '6px' }} /> : renderRooms(sub.class_rooms)}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>
+                      {isEditing ? <select className="glass-input" value={editFormData.teacher_code} onChange={(e) => setEditFormData({...editFormData, teacher_code: e.target.value})} style={{ width: '100%' }}>{teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}</select> : sub.teachers?.full_name || '-'}
+                    </td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>{new Date(sub.created_at).toLocaleDateString('th-TH')}</td>
+                    
+                    <td style={{ padding: '15px', textAlign: 'center' }}>
                       {isEditing ? (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 8px', fontSize: '12px' }}>บันทึก</button>
-                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 8px', fontSize: '12px' }}>ยกเลิก</button>
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button onClick={handleUpdate} className="btn-success" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✔</button>
+                          <button onClick={() => setEditingId(null)} className="btn-outline" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✖</button>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button onClick={() => handleEditClick(sub)} className="btn-primary" style={{ padding: '6px 8px', fontSize: '12px' }}>แก้ไข</button>
-                          <button onClick={() => handleDelete(sub.subject_code)} className="btn-danger" style={{ padding: '6px 8px', fontSize: '12px' }}>ลบ</button>
+                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button onClick={() => handleEditClick(sub)} className="btn-primary" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>✏️</button>
+                          <button onClick={() => handleDelete(sub.subject_code)} className="btn-danger" style={{ padding: '6px 8px', fontSize: '12px', flex: 1 }}>🗑️</button>
                         </div>
                       )}
                     </td>

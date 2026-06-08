@@ -91,7 +91,8 @@ function ScoreEntry({ user }) {
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบบันทึกคะแนน</h2>
 
-      <div className="glass-panel" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* ใช้คลาส score-filters เพื่อควบคุม Layout มือถือ/คอม */}
+      <div className="glass-panel score-filters" style={{ padding: '25px', marginBottom: '20px' }}>
         <input type="date" className="glass-input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
         
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { setSelectedTeacher(e.target.value); setSelectedSubject(''); setSelectedRoom(''); setScores({}); }} disabled={user?.role !== 'admin'}>
@@ -119,7 +120,7 @@ function ScoreEntry({ user }) {
       </div>
 
       {selectedRoom && (
-        <div className="glass-card" style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="glass-card score-filters" style={{ padding: '20px', marginBottom: '20px' }}>
           <span style={{ fontWeight: 'bold', color: '#FF1493' }}>รายละเอียดชิ้นงาน:</span>
           <input className="glass-input" placeholder="ชื่อชิ้นงาน (เช่น สอบกลางภาค)" value={assignmentName} onChange={e => setAssignmentName(e.target.value)} style={{ flex: 1, minWidth: '200px' }} />
           <input type="number" className="glass-input" placeholder="คะแนนเต็ม" value={maxScore} onChange={e => setMaxScore(e.target.value)} style={{ width: '120px' }} />
@@ -127,44 +128,46 @@ function ScoreEntry({ user }) {
       )}
 
       {selectedRoom && assignmentName && maxScore && (
-        <div className="glass-panel" style={{ padding: '30px', marginTop: '20px', background: '#ffffff', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="glass-panel" style={{ padding: '20px', marginTop: '20px', background: '#ffffff', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
             {/* แสดงยอดคนที่ต้องกรอก โดยหักคนที่เป็นทวิภาคีออกไปแล้ว */}
             <span style={{ fontWeight: 'bold', color: '#0056b3', fontSize: '16px' }}>กรอกแล้ว: {Object.keys(scores).length} / {scorableStudentsCount} คน</span>
             <span style={{ color: '#666', fontSize: '14px', fontWeight: '500' }}>ผู้บันทึก: {user?.full_name || 'Admin'}</span>
           </div>
           
-          <div className="table-responsive" style={{ width: '100%' }}>
-            {/* อัปเกรดคลาสและตารางให้กว้าง โปร่ง และมีขอบชัดเจน */}
-            <table className="report-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+          <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+            <table className="report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb', minWidth: '400px' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>รหัส</th>
-                  <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '30%' }}>ชื่อ-นามสกุล</th>
-                  <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>ห้อง</th>
-                  <th style={{ padding: '18px', backgroundColor: '#f9fafb', textAlign: 'center', width: '15%' }}>ระบบ</th>
-                  <th style={{ padding: '18px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', width: '25%' }}>คะแนน (เต็ม {maxScore})</th>
+                  {/* ซ่อนรหัส และ ห้อง บนมือถือ (hide-on-mobile) */}
+                  <th className="hide-on-mobile" style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', border: '1px solid #e5e7eb', width: '20%' }}>รหัส</th>
+                  <th style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', border: '1px solid #e5e7eb', width: '35%' }}>ชื่อ-นามสกุล</th>
+                  <th className="hide-on-mobile" style={{ padding: '15px', backgroundColor: '#f9fafb', textAlign: 'center', border: '1px solid #e5e7eb', width: '20%' }}>ห้อง</th>
+                  
+                  {/* ลบคอลัมน์ 'ระบบ' ออกไปแล้ว */}
+                  
+                  <th style={{ padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center', border: '1px solid #e5e7eb', width: '25%' }}>คะแนน (เต็ม {maxScore})</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudents.map(stu => (
                   <tr key={stu.student_id} style={{ borderBottom: '1px solid #e5e7eb', background: stu.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
-                    <td style={{ padding: '18px', textAlign: 'center', fontWeight: 'bold' }}>{stu.student_id}</td>
-                    <td style={{ padding: '18px', fontWeight: '500' }}>{stu.full_name}</td>
-                    <td style={{ padding: '18px', textAlign: 'center', color: '#FF1493', fontWeight: 'bold' }}>{stu.class_room}</td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>
-                      {stu.is_dual_voc ? <span style={{ background: '#334155', color: '#fff', padding: '5px 12px', borderRadius: '12px', fontSize: '12px' }}>ทวิภาคี</span> : <span style={{ color: '#059669' }}>ปกติ</span>}
-                    </td>
-                    <td style={{ padding: '18px', textAlign: 'center' }}>
-                      {/* เช็คว่าเป็นทวิภาคีหรือไม่ ถ้าเป็นให้ซ่อนช่องกรอกคะแนน */}
+                    <td className="hide-on-mobile" style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', border: '1px solid #e5e7eb' }}>{stu.student_id}</td>
+                    <td style={{ padding: '15px', fontWeight: '500', border: '1px solid #e5e7eb' }}>{stu.full_name}</td>
+                    <td className="hide-on-mobile" style={{ padding: '15px', textAlign: 'center', color: '#FF1493', fontWeight: 'bold', border: '1px solid #e5e7eb' }}>{stu.class_room}</td>
+                    
+                    {/* ลบคอลัมน์ 'ระบบ' ออกไปแล้ว */}
+                    
+                    <td style={{ padding: '15px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                      {/* เช็คว่าเป็นทวิภาคีหรือไม่ ถ้าเป็นให้ซ่อนช่องกรอกคะแนน แล้วโชว์ข้อความแทน */}
                       {stu.is_dual_voc ? (
-                        <span style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: '13px' }}>ไม่ต้องกรอกคะแนน</span>
+                        <span style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: '13px' }}>ทวิภาคี (ไม่ต้องกรอก)</span>
                       ) : (
                         <input 
                           type="number" className="glass-input"
                           value={scores[stu.student_id] !== undefined ? scores[stu.student_id] : ''}
                           onChange={(e) => handleScoreChange(stu.student_id, e.target.value)}
-                          style={{ width: '90px', textAlign: 'center', borderColor: scores[stu.student_id] !== undefined ? '#FF1493' : '#d1d5db' }}
+                          style={{ width: '80px', textAlign: 'center', borderColor: scores[stu.student_id] !== undefined ? '#FF1493' : '#d1d5db', padding: '8px' }}
                         />
                       )}
                     </td>
@@ -173,7 +176,7 @@ function ScoreEntry({ user }) {
               </tbody>
             </table>
           </div>
-          <button onClick={handleSave} disabled={loading} className="btn-primary" style={{ marginTop: '25px', width: '100%', fontSize: '18px', padding: '12px' }}>
+          <button onClick={handleSave} disabled={loading} className="btn-primary" style={{ marginTop: '25px', width: '100%', fontSize: '18px', padding: '15px' }}>
             {loading ? 'กำลังบันทึก...' : '💾 บันทึกคะแนนทั้งหมด'}
           </button>
         </div>
