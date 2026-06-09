@@ -3,6 +3,51 @@ import { supabase } from '../supabaseClient'
 import * as XLSX from 'xlsx';
 import '../App.css'
 
+// 📌 Component ย่อยสำหรับช่องแก้ไขสถานะ (เพิ่ม Popup ยืนยันและการคืนค่าเมื่อยกเลิก)
+const EditableAttendanceCell = ({ initialValue, studentId, date, onSave }) => {
+  const [val, setVal] = useState(initialValue === '-' ? '' : initialValue);
+
+  useEffect(() => {
+    setVal(initialValue === '-' ? '' : initialValue);
+  }, [initialValue]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    if (window.confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newValue}" ใช่หรือไม่?`)) {
+      setVal(newValue);
+      onSave(studentId, date, newValue);
+    } else {
+      // 📌 คืนค่ากลับไปเป็นค่าเดิมถ้ายกเลิก
+      e.target.value = val;
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30px' }}>
+      <select
+        className="editable-cell"
+        value={val}
+        onChange={handleChange}
+        style={{
+          paddingRight: '14px', 
+          fontSize: val === 'ขาด' ? '18px' : '14px', 
+          fontWeight: val === 'ขาด' ? '900' : 'bold', 
+          color: val === 'มา' ? '#059669' : val === 'ขาด' ? '#dc2626' : val === 'ลา' ? '#d97706' : val === 'ละเว้น' ? '#434343' : '#9ca3af'
+        }}
+      >
+        <option value="" disabled>-</option>
+        <option value="มา">มา</option>
+        <option value="ลา">ลา</option>
+        <option value="ขาด">ขาด</option>
+        <option value="ละเว้น">ละเว้น</option>
+        {/* ไม่ใส่ตัวเลือก 'ไม่มีเรียน' ในนี้ เพราะถ้าไม่มีเรียนจะไม่มีเรียนทั้งห้อง */}
+      </select>
+      {/* 📌 ไอคอนดินสอสีดำเข้มขึ้น (opacity: 0.85) */}
+      <span style={{ position: 'absolute', right: '2px', top: '2px', fontSize: '12px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}>✎</span>
+    </div>
+  );
+};
+
 function AttendanceReport({ user }) {
   const [teachers, setTeachers] = useState([])
   const [subjects, setSubjects] = useState([])
@@ -53,13 +98,8 @@ function AttendanceReport({ user }) {
     setLoading(false)
   }
 
-  // 📌 ฟังก์ชันจัดการแก้ไข พร้อมระบบแจ้งเตือนยืนยัน (Confirm)
+  // 📌 นำ Confirm ออกจากตรงนี้ เพราะถูกย้ายไปจัดการใน EditableAttendanceCell แทนแล้ว
   const handleStatusChange = async (studentId, date, newStatus) => {
-    // 📌 แจ้งเตือนก่อนเซฟ
-    if (!window.confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ใช่หรือไม่?`)) {
-      return; // ออกจากการทำงาน ถ้ายกเลิก
-    }
-
     const existingLogs = logs.filter(l => l.student_id === studentId && l.date === date);
     const existingLog = existingLogs[existingLogs.length - 1]; 
 
@@ -193,6 +233,10 @@ function AttendanceReport({ user }) {
 
   const displayedRooms = reportData && selectedRoomFilter ? [selectedRoomFilter] : [];
 
+  // 📌 เช็คสิทธิ์การแก้ไข (แอดมิน หรือ เจ้าของวิชา)
+  const currentSubObj = subjects.find(s => s.subject_code === selectedSubject);
+  const canEdit = user?.role === 'admin' || (user?.teacher_code && currentSubObj?.teacher_code === user.teacher_code);
+
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       
@@ -263,7 +307,7 @@ function AttendanceReport({ user }) {
           setSelectedRoomFilter('');
           setHasSearched(false);
           setLogs([]);
-        }}>
+        }} style={{ minWidth: '150px' }}>
             <option value="">-- เลือกอาจารย์ --</option>
             {teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}
         </select>
@@ -273,7 +317,7 @@ function AttendanceReport({ user }) {
           setSelectedRoomFilter(''); 
           setHasSearched(false);
           setLogs([]);
-        }} style={{ flex: 1 }}>
+        }} style={{ flex: 1, minWidth: '150px' }}>
             <option value="">-- เลือกวิชา --</option>
             {filteredSubjects.map(s => <option key={s.subject_code} value={s.subject_code}>{s.subject_name}</option>)}
         </select>
@@ -329,7 +373,8 @@ function AttendanceReport({ user }) {
                           <th key={d} rowSpan="2" style={{ padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '90px' }}>
                             {d} <br/>
                             <small style={{ fontWeight: 'normal', color: '#6b7280' }}>({sampleLog?.batchTime || '-'})</small>
-                            {sampleLog?.createdAt && (
+                            {/* 📌 ซ่อนปุ่มลบ ถ้าไม่มีสิทธิ์แก้ไข */}
+                            {canEdit && sampleLog?.createdAt && (
                               <button onClick={() => handleDeleteBatch(d, sampleLog.createdAt)} style={{ display: 'block', margin: '8px auto 0', padding: '6px 15px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                                 ลบ
                               </button>
@@ -360,30 +405,28 @@ function AttendanceReport({ user }) {
                                 ทวิภาคี
                               </span>
                             ) : val.text === 'ไม่มีเรียน' ? (
+                              /* 📌 โชว์เป็นป้ายข้อความเหมือนทวิภาคี ถ้าสถานะเป็น 'ไม่มีเรียน' */
                               <span style={{ background: '#ede9fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap', color: '#8b5cf6', fontWeight: 'bold' }}>
                                 ไม่มีเรียน
                               </span>
                             ) : (
-                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30px' }}>
-                                <select
-                                  className="editable-cell"
-                                  value={val.text === '-' ? '' : val.text}
-                                  onChange={(e) => handleStatusChange(s.student_id, val.date, e.target.value)}
-                                  style={{
-                                    paddingRight: '12px', 
-                                    fontSize: val.text === 'ขาด' ? '18px' : '14px', 
-                                    fontWeight: val.text === 'ขาด' ? '900' : 'bold', 
-                                    color: val.text === 'มา' ? '#059669' : val.text === 'ขาด' ? '#dc2626' : val.text === 'ลา' ? '#d97706' : val.text === 'ละเว้น' ? '#434343' : '#9ca3af'
-                                  }}
-                                >
-                                  <option value="" disabled>-</option>
-                                  <option value="มา">มา</option>
-                                  <option value="ลา">ลา</option>
-                                  <option value="ขาด">ขาด</option>
-                                  <option value="ละเว้น">ละเว้น</option>
-                                </select>
-                                <span style={{ position: 'absolute', right: '2px', top: '2px', fontSize: '11px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.5 }}>✎</span>
-                              </div>
+                              /* 📌 เช็คสิทธิ์ canEdit ถ้ามีสิทธิ์ให้ใช้ Component แก้ไขได้ */
+                              canEdit ? (
+                                <EditableAttendanceCell
+                                  initialValue={val.text}
+                                  studentId={s.student_id}
+                                  date={val.date}
+                                  onSave={handleStatusChange}
+                                />
+                              ) : (
+                                <span style={{
+                                  fontSize: val.text === 'ขาด' ? '18px' : '14px', 
+                                  fontWeight: val.text === 'ขาด' ? '900' : 'bold', 
+                                  color: val.text === 'มา' ? '#059669' : val.text === 'ขาด' ? '#dc2626' : val.text === 'ลา' ? '#d97706' : val.text === 'ละเว้น' ? '#434343' : '#9ca3af'
+                                }}>
+                                  {val.text}
+                                </span>
+                              )
                             )}
                           </td>
                         ))}

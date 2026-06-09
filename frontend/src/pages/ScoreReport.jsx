@@ -14,7 +14,6 @@ const EditableScoreCell = ({ initialValue, maxScore, studentId, createdAt, onSav
   const handleBlur = () => {
     const currentStr = initialValue === '-' ? '' : String(initialValue);
     if (String(val) !== currentStr) {
-       // 📌 เพิ่มหน้าต่างแจ้งเตือนยืนยันการบันทึก
        const confirmMsg = val === '' ? 'ว่าง (ลบข้อมูล)' : val;
        if (window.confirm(`ยืนยันการแก้ไขคะแนนเป็น ${confirmMsg} ใช่หรือไม่?`)) {
          onSave(studentId, createdAt, maxScore, val);
@@ -24,10 +23,9 @@ const EditableScoreCell = ({ initialValue, maxScore, studentId, createdAt, onSav
     }
   };
 
-  // 📌 เพิ่มให้กด Enter เพื่อยืนยันได้ด้วย
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.target.blur(); // ทำให้หลุดโฟกัส ซึ่งจะไปเรียก handleBlur ทันที
+      e.target.blur(); 
     }
   };
 
@@ -43,7 +41,7 @@ const EditableScoreCell = ({ initialValue, maxScore, studentId, createdAt, onSav
          style={{
             width: '100%',
             textAlign: 'center',
-            paddingRight: '12px',
+            paddingRight: '14px', /* เว้นระยะให้ไอคอนดินสอ */
             border: 'none',
             background: 'transparent',
             fontWeight: 'bold',
@@ -52,7 +50,8 @@ const EditableScoreCell = ({ initialValue, maxScore, studentId, createdAt, onSav
             outline: 'none'
          }}
        />
-       <span style={{ position: 'absolute', right: '4px', top: '2px', fontSize: '11px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.5 }}>✎</span>
+       {/* 📌 ปรับ opacity เป็น 0.85 เพื่อให้สีดินสอเข้มขึ้นมองเห็นชัดเจน */}
+       <span style={{ position: 'absolute', right: '2px', top: '2px', fontSize: '12px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}>✎</span>
      </div>
   );
 };
@@ -258,6 +257,10 @@ function ScoreReport({ user }) {
 
   const displayedRooms = reportData && selectedRoomFilter ? [selectedRoomFilter] : [];
 
+  // 📌 ตรวจสอบสิทธิ์ว่าเป็น Admin หรือครูเจ้าของวิชานี้หรือไม่
+  const currentSubObj = subjects.find(s => s.subject_code === selectedSubject);
+  const canEdit = user?.role === 'admin' || (user?.teacher_code && currentSubObj?.teacher_code === user.teacher_code);
+
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       
@@ -318,7 +321,6 @@ function ScoreReport({ user }) {
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>รายงานสรุปคะแนน</h2>
       
       <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-        
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
@@ -397,9 +399,12 @@ function ScoreReport({ user }) {
                       {roomObj.assignmentCols.map((col, i) => (
                         <th key={i} style={{ padding: '12px', backgroundColor: '#ffffff', fontWeight: 'normal', fontSize: '13px', textAlign: 'center' }}>
                           <span style={{ color: '#4b5563' }}>เต็ม {col.maxScore}</span>
-                          <button onClick={() => handleDeleteBatch(col.createdAt)} style={{ display: 'block', margin: '8px auto 0', padding: '6px 15px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                            ลบ
-                          </button>
+                          {/* 📌 ซ่อนปุ่มลบ ถ้าไม่มีสิทธิ์แก้ไข */}
+                          {canEdit && (
+                            <button onClick={() => handleDeleteBatch(col.createdAt)} style={{ display: 'block', margin: '8px auto 0', padding: '6px 15px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                              ลบ
+                            </button>
+                          )}
                         </th>
                       ))}
                       <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '80px' }}>รวม (เต็ม {roomTotalMax})</th>
@@ -420,14 +425,20 @@ function ScoreReport({ user }) {
                                 ทวิภาคี
                               </span>
                             ) : (
-                              /* 📌 แทนที่ข้อความนิ่งๆ ด้วย EditableScoreCell */
-                              <EditableScoreCell
-                                initialValue={val}
-                                maxScore={roomObj.assignmentCols[i].maxScore}
-                                studentId={s.student_id}
-                                createdAt={roomObj.assignmentCols[i].createdAt}
-                                onSave={handleScoreUpdate}
-                              />
+                              /* 📌 โชว์ Editable Cell เฉพาะคนที่มีสิทธิ์เท่านั้น */
+                              canEdit ? (
+                                <EditableScoreCell
+                                  initialValue={val}
+                                  maxScore={roomObj.assignmentCols[i].maxScore}
+                                  studentId={s.student_id}
+                                  createdAt={roomObj.assignmentCols[i].createdAt}
+                                  onSave={handleScoreUpdate}
+                                />
+                              ) : (
+                                <span style={{ fontWeight: typeof val === 'number' ? 'bold' : 'normal', color: val === '-' ? '#9ca3af' : '#111827' }}>
+                                  {val}
+                                </span>
+                              )
                             )}
                           </td>
                         ))}

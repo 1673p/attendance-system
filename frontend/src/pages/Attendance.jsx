@@ -142,6 +142,18 @@ function Attendance({ user }) {
             box-sizing: border-box !important; 
           }
         }
+        
+        /* 📌 เพิ่มเส้นตารางแบ่งตามแถวให้ดูง่ายขึ้น */
+        .glass-table {
+          border-collapse: collapse;
+        }
+        .glass-table th, .glass-table td {
+          padding: 12px 10px;
+          border-bottom: 1px solid #e2e8f0; /* สีเส้นแบ่งแถว */
+        }
+        .glass-table thead th {
+          border-bottom: 2px solid #cbd5e1; /* สีเส้นใต้หัวตาราง (เข้มกว่านิดหน่อย) */
+        }
       `}</style>
 
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบเช็คชื่อเข้าเรียน</h2>
@@ -191,7 +203,7 @@ function Attendance({ user }) {
             <button onClick={() => handleCheckAll('ละเว้น')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#333333', color: '#333333' }}>ละเว้น</button>
             
             <button onClick={() => handleCheckAll('ไม่มีเรียน')} disabled={loading} className="btn-primary" style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: '13px', background: '#8b5cf6', borderColor: '#8b5cf6' }}>
-              {loading ? 'กำลังบันทึก...' : 'ไม่มีเรียน'}
+              {loading ? 'กำลังบันทึก...' : 'ตั้งเป็นไม่มีเรียน'}
             </button>
           </div>
 
