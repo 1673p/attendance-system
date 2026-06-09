@@ -3,6 +3,60 @@ import { supabase } from '../supabaseClient'
 import * as XLSX from 'xlsx';
 import '../App.css'
 
+// 📌 Component ย่อยสำหรับช่องกรอกคะแนนแบบแก้ไขได้
+const EditableScoreCell = ({ initialValue, maxScore, studentId, createdAt, onSave }) => {
+  const [val, setVal] = useState(initialValue === '-' ? '' : initialValue);
+
+  useEffect(() => {
+    setVal(initialValue === '-' ? '' : initialValue);
+  }, [initialValue]);
+
+  const handleBlur = () => {
+    const currentStr = initialValue === '-' ? '' : String(initialValue);
+    if (String(val) !== currentStr) {
+       // 📌 เพิ่มหน้าต่างแจ้งเตือนยืนยันการบันทึก
+       const confirmMsg = val === '' ? 'ว่าง (ลบข้อมูล)' : val;
+       if (window.confirm(`ยืนยันการแก้ไขคะแนนเป็น ${confirmMsg} ใช่หรือไม่?`)) {
+         onSave(studentId, createdAt, maxScore, val);
+       } else {
+         setVal(currentStr); // คืนค่าเดิมถ้ากดยกเลิก
+       }
+    }
+  };
+
+  // 📌 เพิ่มให้กด Enter เพื่อยืนยันได้ด้วย
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur(); // ทำให้หลุดโฟกัส ซึ่งจะไปเรียก handleBlur ทันที
+    }
+  };
+
+  return (
+     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30px' }}>
+       <input
+         type="number"
+         className="editable-cell"
+         value={val}
+         onChange={(e) => setVal(e.target.value)}
+         onBlur={handleBlur}
+         onKeyDown={handleKeyDown} 
+         style={{
+            width: '100%',
+            textAlign: 'center',
+            paddingRight: '12px',
+            border: 'none',
+            background: 'transparent',
+            fontWeight: 'bold',
+            color: val === '' ? '#9ca3af' : '#111827',
+            fontSize: '14px',
+            outline: 'none'
+         }}
+       />
+       <span style={{ position: 'absolute', right: '4px', top: '2px', fontSize: '11px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.5 }}>✎</span>
+     </div>
+  );
+};
+
 function ScoreReport({ user }) {
   const [teachers, setTeachers] = useState([])
   const [subjects, setSubjects] = useState([])
@@ -51,6 +105,59 @@ function ScoreReport({ user }) {
     setScoresData(data || [])
     setLoading(false)
   }
+
+  const handleScoreUpdate = async (studentId, createdAt, maxScore, newScoreValue) => {
+    if (newScoreValue !== '' && Number(newScoreValue) > Number(maxScore)) {
+      alert(`คะแนนต้องไม่เกินคะแนนเต็ม (${maxScore})`);
+      fetchReport(); 
+      return;
+    }
+    if (newScoreValue !== '' && Number(newScoreValue) < 0) {
+      fetchReport();
+      return;
+    }
+
+    const scoreNum = newScoreValue === '' ? null : Number(newScoreValue);
+    const existingRecord = scoresData.find(s => s.student_id === studentId && s.created_at === createdAt);
+
+    if (existingRecord) {
+      if (scoreNum === null) {
+         const { error } = await supabase.from('student_scores')
+            .delete()
+            .eq('student_id', studentId)
+            .eq('created_at', createdAt);
+         if (!error) setScoresData(prev => prev.filter(s => !(s.student_id === studentId && s.created_at === createdAt)));
+         else alert("ลบข้อมูลไม่สำเร็จ: " + error.message);
+      } else {
+         if (existingRecord.score === scoreNum) return; 
+         const { error } = await supabase.from('student_scores')
+            .update({ score: scoreNum })
+            .eq('student_id', studentId)
+            .eq('created_at', createdAt);
+         if (!error) setScoresData(prev => prev.map(s => (s.student_id === studentId && s.created_at === createdAt) ? { ...s, score: scoreNum } : s));
+         else alert("อัปเดตไม่สำเร็จ: " + error.message);
+      }
+    } else {
+       if (scoreNum === null) return;
+       const sampleRecord = scoresData.find(s => s.created_at === createdAt);
+       if (!sampleRecord) return; 
+
+       const newEntry = {
+          date: sampleRecord.date,
+          subject_code: sampleRecord.subject_code,
+          student_id: studentId,
+          assignment_name: sampleRecord.assignment_name,
+          score: scoreNum,
+          max_score: sampleRecord.max_score,
+          created_at: createdAt,
+          recorded_by: user?.teacher_code || 'admin'
+       };
+
+       const { data, error } = await supabase.from('student_scores').insert([newEntry]).select();
+       if (!error && data) setScoresData(prev => [...prev, data[0]]);
+       else alert("บันทึกข้อมูลไม่สำเร็จ: " + error?.message);
+    }
+  };
 
   const handleDeleteBatch = async (createdAt) => {
     if (!window.confirm(`ยืนยันการลบข้อมูลคะแนนชิ้นงานนี้ทั้งหมด?`)) return;
@@ -154,7 +261,6 @@ function ScoreReport({ user }) {
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       
-      {/* 📌 ควบคุม Layout ให้เรียงคนละบรรทัดเฉพาะบนมือถือ และจัดการเส้นตารางให้ชัดเจน */}
       <style>{`
         .th-sticky-name {
           position: sticky;
@@ -168,13 +274,21 @@ function ScoreReport({ user }) {
           z-index: 5;
         }
 
-        /* 📌 ปรับเส้นตารางให้ชัดเจนขึ้น */
         .report-table th, 
         .report-table td {
-          border: 1px solid #9ca3af !important; /* เส้นสีเทาเข้มขึ้น */
+          border: 1px solid #9ca3af !important; 
         }
         .report-table thead th {
-          border-bottom: 2px solid #6b7280 !important; /* เส้นใต้หัวตารางหนาและเข้มขึ้น */
+          border-bottom: 2px solid #6b7280 !important; 
+        }
+
+        .editable-cell::-webkit-outer-spin-button,
+        .editable-cell::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .editable-cell[type=number] {
+          -moz-appearance: textfield;
         }
 
         @media (max-width: 600px) {
@@ -203,10 +317,8 @@ function ScoreReport({ user }) {
 
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>รายงานสรุปคะแนน</h2>
       
-      {/* แก้ไขให้จัดเรียงแนวนอนบนคอมพิวเตอร์ และใส่ mobile-stack สำหรับมือถือ */}
       <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         
-        {/* 📌 นำ disabled={user?.role !== 'admin'} ออก เพื่อให้ทุกคนดูของกันและกันได้ */}
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
@@ -298,21 +410,25 @@ function ScoreReport({ user }) {
                     {roomObj.students.map(s => (
                       <tr key={s.student_id} style={{ background: s.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
                         
-                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
-                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: s.is_dual_voc ? '#f8fafc' : '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
+                        <td className="td-sticky-name" style={{ backgroundColor: s.is_dual_voc ? '#f8fafc' : '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
                         
                         {s.scoreColumns.map((val, i) => (
-                          <td key={i} style={{ 
-                            padding: '15px', 
-                            textAlign: 'center', 
-                            color: val === 'เป็นทวิภาคี' ? '#0284c7' : val === '-' ? '#9ca3af' : '#111827', 
-                            fontWeight: typeof val === 'number' ? 'bold' : 'normal' 
-                          }}>
+                          <td key={i} style={{ padding: '8px', textAlign: 'center', verticalAlign: 'middle' }}>
                             {val === 'เป็นทวิภาคี' ? (
-                              <span style={{ background: '#e0f2fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap' }}>
-                                {val}
+                              <span style={{ background: '#e0f2fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap', color: '#0284c7' }}>
+                                ทวิภาคี
                               </span>
-                            ) : val}
+                            ) : (
+                              /* 📌 แทนที่ข้อความนิ่งๆ ด้วย EditableScoreCell */
+                              <EditableScoreCell
+                                initialValue={val}
+                                maxScore={roomObj.assignmentCols[i].maxScore}
+                                studentId={s.student_id}
+                                createdAt={roomObj.assignmentCols[i].createdAt}
+                                onSave={handleScoreUpdate}
+                              />
+                            )}
                           </td>
                         ))}
                         

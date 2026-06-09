@@ -53,6 +53,52 @@ function AttendanceReport({ user }) {
     setLoading(false)
   }
 
+  // 📌 ฟังก์ชันจัดการแก้ไข พร้อมระบบแจ้งเตือนยืนยัน (Confirm)
+  const handleStatusChange = async (studentId, date, newStatus) => {
+    // 📌 แจ้งเตือนก่อนเซฟ
+    if (!window.confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ใช่หรือไม่?`)) {
+      return; // ออกจากการทำงาน ถ้ายกเลิก
+    }
+
+    const existingLogs = logs.filter(l => l.student_id === studentId && l.date === date);
+    const existingLog = existingLogs[existingLogs.length - 1]; 
+
+    if (existingLog) {
+      const { error } = await supabase.from('attendance_logs')
+        .update({ status: newStatus })
+        .eq('student_id', studentId)
+        .eq('date', date)
+        .eq('subject_code', selectedSubject)
+        .eq('created_at', existingLog.created_at);
+
+      if (!error) {
+         setLogs(prev => prev.map(l => (l === existingLog ? { ...l, status: newStatus } : l)));
+      } else {
+         alert("อัปเดตไม่สำเร็จ: " + error.message);
+      }
+    } else {
+      const batchLog = logs.find(l => l.date === date);
+      const createdAtToUse = batchLog ? batchLog.created_at : new Date().toISOString();
+
+      const newEntry = {
+        student_id: studentId,
+        date: date,
+        subject_code: selectedSubject,
+        status: newStatus,
+        created_at: createdAtToUse,
+        recorded_by: user?.teacher_code || 'admin'
+      };
+
+      const { data, error } = await supabase.from('attendance_logs').insert([newEntry]).select();
+
+      if (!error && data) {
+         setLogs(prev => [...prev, data[0]]);
+      } else {
+         alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล: " + (error?.message || ''));
+      }
+    }
+  };
+
   const handleDeleteBatch = async (date, createdAt) => {
     if (!window.confirm(`ยืนยันการลบข้อมูลการเช็คชื่อของวันที่ ${date}?`)) return;
     const { error } = await supabase.from('attendance_logs').delete().eq('date', date).eq('created_at', createdAt);
@@ -75,6 +121,8 @@ function AttendanceReport({ user }) {
         row[date] = s.dateColumns[i] ? s.dateColumns[i].text : '-';
       });
       
+      row['มา/ลา (วัน)'] = s.presentCount;
+      row['ขาด (วัน)'] = s.absentCount;
       row['มา/ลา (%)'] = s.presentPercent + '%';
       row['ขาด (%)'] = s.absentPercent + '%';
       return row;
@@ -114,12 +162,14 @@ function AttendanceReport({ user }) {
             totalCount++; 
             if (latestLog.status !== 'ขาด') present++; else absent++; 
             dateColumns.push({ 
+              date: d,
               text: latestLog.status, 
               batchTime: new Date(latestLog.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}), 
               createdAt: latestLog.created_at 
             });
           } else {
             dateColumns.push({ 
+              date: d,
               text: stu.is_dual_voc ? 'เป็นทวิภาคี' : '-', 
               batchTime: null, 
               createdAt: null 
@@ -130,6 +180,8 @@ function AttendanceReport({ user }) {
         return { 
           ...stu, 
           dateColumns, 
+          presentCount: present,
+          absentCount: absent,
           presentPercent: totalCount > 0 ? ((present/totalCount)*100).toFixed(0) : 0, 
           absentPercent: totalCount > 0 ? ((absent/totalCount)*100).toFixed(0) : 0 
         }
@@ -157,13 +209,25 @@ function AttendanceReport({ user }) {
           z-index: 5;
         }
 
-        /* 📌 ปรับเส้นตารางให้ชัดเจนขึ้น */
         .report-table th, 
         .report-table td {
-          border: 1px solid #9ca3af !important; /* เปลี่ยนสีเส้นให้เข้มขึ้น */
+          border: 1px solid #9ca3af !important; 
         }
         .report-table thead th {
-          border-bottom: 2px solid #6b7280 !important; /* เส้นขอบล่างของหัวตารางให้หนาขึ้น */
+          border-bottom: 2px solid #6b7280 !important; 
+        }
+
+        .editable-cell {
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          background: transparent;
+          border: none;
+          text-align: center;
+          text-align-last: center;
+          width: 100%;
+          cursor: pointer;
+          outline: none;
         }
 
         @media (max-width: 600px) {
@@ -193,8 +257,6 @@ function AttendanceReport({ user }) {
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>สรุปผลการเช็คชื่อ</h2>
       
       <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-        
-        {/* 📌 นำ disabled={user?.role !== 'admin'} ออก เพื่อให้ทุกคนดูของกันและกันได้ */}
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
@@ -275,37 +337,59 @@ function AttendanceReport({ user }) {
                           </th>
                         )
                       })}
-                      <th colSpan="2" style={{ padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
+                      <th colSpan="4" style={{ padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
                     </tr>
                     <tr>
-                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>มา/ลา</th>
-                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>ขาด</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '12px', textAlign: 'center', color: '#4b5563', minWidth: '70px' }}>มา/ลา (วัน)</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '12px', textAlign: 'center', color: '#4b5563', minWidth: '70px' }}>ขาด (วัน)</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '12px', textAlign: 'center', color: '#4b5563', minWidth: '70px' }}>มา/ลา (%)</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '12px', textAlign: 'center', color: '#4b5563', minWidth: '70px' }}>ขาด (%)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roomObj.students.map(s => (
-                      <tr key={s.student_id}>
-                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
+                      <tr key={s.student_id} style={{ background: s.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: s.is_dual_voc ? '#f8fafc' : '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
                         
-                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
+                        <td className="td-sticky-name" style={{ backgroundColor: s.is_dual_voc ? '#f8fafc' : '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
                         
                         {s.dateColumns.map((val, i) => (
-                          <td key={i} style={{ 
-                            padding: '15px', 
-                            textAlign: 'center',
-                            color: val.text === 'มา' ? '#059669' : val.text === 'ขาด' ? '#dc2626' : val.text === 'ลา' ? '#d97706' : val.text === 'เป็นทวิภาคี' ? '#0284c7' : '#9ca3af',
-                            fontWeight: val.text === 'ขาด' || val.text === 'เป็นทวิภาคี' ? 'bold' : 'normal'
-                          }}>
-                            {val.text === 'เป็นทวิภาคี' ? (
-                              <span style={{ background: '#e0f2fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap' }}>
-                                {val.text}
+                          <td key={i} style={{ padding: '8px', textAlign: 'center', verticalAlign: 'middle' }}>
+                            {s.is_dual_voc ? (
+                              <span style={{ background: '#e0f2fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap', color: '#0284c7' }}>
+                                ทวิภาคี
+                              </span>
+                            ) : val.text === 'ไม่มีเรียน' ? (
+                              <span style={{ background: '#ede9fe', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', whiteSpace: 'nowrap', color: '#8b5cf6', fontWeight: 'bold' }}>
+                                ไม่มีเรียน
                               </span>
                             ) : (
-                              val.text
+                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30px' }}>
+                                <select
+                                  className="editable-cell"
+                                  value={val.text === '-' ? '' : val.text}
+                                  onChange={(e) => handleStatusChange(s.student_id, val.date, e.target.value)}
+                                  style={{
+                                    paddingRight: '12px', 
+                                    fontSize: val.text === 'ขาด' ? '18px' : '14px', 
+                                    fontWeight: val.text === 'ขาด' ? '900' : 'bold', 
+                                    color: val.text === 'มา' ? '#059669' : val.text === 'ขาด' ? '#dc2626' : val.text === 'ลา' ? '#d97706' : val.text === 'ละเว้น' ? '#434343' : '#9ca3af'
+                                  }}
+                                >
+                                  <option value="" disabled>-</option>
+                                  <option value="มา">มา</option>
+                                  <option value="ลา">ลา</option>
+                                  <option value="ขาด">ขาด</option>
+                                  <option value="ละเว้น">ละเว้น</option>
+                                </select>
+                                <span style={{ position: 'absolute', right: '2px', top: '2px', fontSize: '11px', color: '#000000', pointerEvents: 'none', userSelect: 'none', opacity: 0.5 }}>✎</span>
+                              </div>
                             )}
                           </td>
                         ))}
                         
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#059669', fontSize: '14px' }}>{s.presentCount}</td>
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#dc2626', fontSize: '14px' }}>{s.absentCount}</td>
                         <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#059669', fontSize: '14px' }}>{s.presentPercent}%</td>
                         <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#dc2626', fontSize: '14px' }}>{s.absentPercent}%</td>
                       </tr>

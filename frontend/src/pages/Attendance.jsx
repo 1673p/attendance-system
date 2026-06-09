@@ -43,6 +43,52 @@ function Attendance({ user }) {
     return allRooms.filter(room => allowed.includes(room.replace(/\s+/g, '')));
   }, [selectedSubject, subjects, allRooms]);
 
+  // 📌 ปรับปรุงฟังก์ชันเลือกทั้งหมด
+  const handleCheckAll = async (status) => {
+    // 📌 กรณีเลือก "ไม่มีเรียน" ให้เซฟทันที
+    if (status === 'ไม่มีเรียน') {
+      if (!selectedDate || !selectedTeacher || !selectedSubject || !selectedRoom) {
+        return alert("กรุณาเลือกข้อมูลด้านบนให้ครบก่อน (วันที่, อาจารย์, วิชา, ห้องเรียน)");
+      }
+      
+      if (window.confirm(`ยืนยันว่าคลาสนี้ 'ไม่มีเรียน' ใช่หรือไม่?\nระบบจะบันทึกสถานะ 'ไม่มีเรียน' ให้กับนักเรียนทุกคนในห้อง ${selectedRoom} ทันที`)) {
+        setLoading(true);
+        const logs = filteredStudents.filter(s => !s.is_dual_voc).map(stu => ({
+          date: selectedDate, 
+          subject_code: selectedSubject, 
+          student_id: stu.student_id, 
+          status: 'ไม่มีเรียน',
+          recorded_by: user?.teacher_code || 'admin'
+        }));
+
+        if (logs.length > 0) {
+          const { error } = await supabase.from('attendance_logs').insert(logs);
+          if (error) alert(error.message);
+          else { 
+            alert('บันทึกสถานะ "ไม่มีเรียน" สำเร็จ!'); 
+            setAttendance({}); 
+            setSelectedRoom(''); 
+            setIsPreview(false);
+          }
+        } else {
+          alert('ไม่มีนักเรียนในห้องนี้ให้บันทึก');
+        }
+        setLoading(false);
+        return; // จบการทำงาน ไม่ต้องไปแก้ state attendance
+      }
+      return;
+    }
+
+    // กรณีเลือก มา ลา ขาด ละเว้น
+    const newAttendance = { ...attendance };
+    filteredStudents.forEach(stu => {
+      if (!stu.is_dual_voc) {
+        newAttendance[stu.student_id] = status;
+      }
+    });
+    setAttendance(newAttendance);
+  };
+
   const handlePreview = () => {
     if (!selectedDate || !selectedTeacher || !selectedSubject) return alert("กรุณาเลือกข้อมูลให้ครบ")
     if (!selectedRoom) return alert("กรุณาเลือกห้องเรียน")
@@ -92,8 +138,8 @@ function Attendance({ user }) {
           }
           .mobile-stack > * {
             width: 100% !important;
-            max-width: 100% !important; /* ป้องกันไม่ให้เกินขนาดของกรอบ */
-            box-sizing: border-box !important; /* ให้คำนวณขนาดเส้นขอบรวมอยู่ใน 100% ด้วย */
+            max-width: 100% !important; 
+            box-sizing: border-box !important; 
           }
         }
       `}</style>
@@ -137,6 +183,18 @@ function Attendance({ user }) {
             </span>
           </div>
 
+          <div style={{ marginBottom: '15px', padding: '15px', background: '#e0f2fe', borderRadius: '8px', border: '1px solid #bae6fd', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 'bold', color: '#0369a1', marginRight: '5px' }}>เลือกทั้งหมด:</span>
+            <button onClick={() => handleCheckAll('มา')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#11998e', color: '#11998e' }}>มา</button>
+            <button onClick={() => handleCheckAll('ลา')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#f39c12', color: '#f39c12' }}>ลา</button>
+            <button onClick={() => handleCheckAll('ขาด')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#ff416c', color: '#ff416c' }}>ขาด</button>
+            <button onClick={() => handleCheckAll('ละเว้น')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#333333', color: '#333333' }}>ละเว้น</button>
+            
+            <button onClick={() => handleCheckAll('ไม่มีเรียน')} disabled={loading} className="btn-primary" style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: '13px', background: '#8b5cf6', borderColor: '#8b5cf6' }}>
+              {loading ? 'กำลังบันทึก...' : 'ไม่มีเรียน'}
+            </button>
+          </div>
+
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '15px', fontSize: '13.5px', background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#334155' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#11998e' }}></span> 
@@ -153,6 +211,10 @@ function Attendance({ user }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#333333' }}></span> 
               <strong>ละเว้น:</strong> นักเรียนที่จบ ปวช. มา ไม่ต้องเรียนวิชานี้
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#8b5cf6' }}></span> 
+              <strong>ไม่มีเรียน:</strong> วันหยุด/กิจกรรม/งดสอน
             </div>
           </div>
 
@@ -176,7 +238,7 @@ function Attendance({ user }) {
                       {stu.is_dual_voc ? (
                         <span style={{ color: '#64748b', fontStyle: 'italic', fontWeight: 'bold', fontSize: '13px' }}>นักเรียนทวิภาคี (ไม่ต้องเช็ค)</span>
                       ) : (
-                        <div className="status-btn-container">
+                        <div className="status-btn-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '5px' }}>
                           {['มา', 'ลา', 'ขาด', 'ละเว้น'].map(s => {
                             const isActive = attendance[stu.student_id] === s;
                             let activeStyle = {};
@@ -233,7 +295,7 @@ function Attendance({ user }) {
                   <span>{s.student_id} {s.full_name}</span>
                   <span style={{ 
                     fontWeight: 'bold', 
-                    color: s.status === 'มา' ? '#11998e' : s.status === 'ขาด' ? '#ff416c' : s.status === 'ละเว้น' ? '#434343' : '#f39c12' 
+                    color: s.status === 'มา' ? '#11998e' : s.status === 'ไม่มีเรียน' ? '#8b5cf6' : s.status === 'ขาด' ? '#ff416c' : s.status === 'ละเว้น' ? '#434343' : '#f39c12' 
                   }}>
                     {s.status}
                   </span>
