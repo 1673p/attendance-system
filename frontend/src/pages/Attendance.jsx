@@ -92,6 +92,8 @@ function Attendance({ user }) {
           }
           .mobile-stack > * {
             width: 100% !important;
+            max-width: 100% !important; /* ป้องกันไม่ให้เกินขนาดของกรอบ */
+            box-sizing: border-box !important; /* ให้คำนวณขนาดเส้นขอบรวมอยู่ใน 100% ด้วย */
           }
         }
       `}</style>

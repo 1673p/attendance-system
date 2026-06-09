@@ -89,10 +89,27 @@ function ScoreEntry({ user }) {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+      
+      {/* 📌 CSS สำหรับแก้ปัญหา Dropdown และ Input ล้นกรอบบนมือถือ */}
+      <style>{`
+        @media (max-width: 600px) {
+          .mobile-stack {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .mobile-stack > * {
+            width: 100% !important;
+            max-width: 100% !important; /* ป้องกันไม่ให้เกินขนาดของกรอบ */
+            box-sizing: border-box !important; /* ให้คำนวณขนาดเส้นขอบรวมอยู่ใน 100% ด้วย */
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
+
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบบันทึกคะแนน</h2>
 
-      {/* ใช้คลาส score-filters เพื่อควบคุม Layout มือถือ/คอม */}
-      <div className="glass-panel score-filters" style={{ padding: '25px', marginBottom: '20px' }}>
+      {/* ใช้คลาส mobile-stack เพื่อควบคุม Layout มือถือ */}
+      <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input type="date" className="glass-input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
         
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { setSelectedTeacher(e.target.value); setSelectedSubject(''); setSelectedRoom(''); setScores({}); }} disabled={user?.role !== 'admin'}>
@@ -120,7 +137,7 @@ function ScoreEntry({ user }) {
       </div>
 
       {selectedRoom && (
-        <div className="glass-card score-filters" style={{ padding: '20px', marginBottom: '20px' }}>
+        <div className="glass-card mobile-stack" style={{ padding: '20px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontWeight: 'bold', color: '#FF1493' }}>รายละเอียดชิ้นงาน:</span>
           <input className="glass-input" placeholder="ชื่อชิ้นงาน (เช่น สอบกลางภาค)" value={assignmentName} onChange={e => setAssignmentName(e.target.value)} style={{ flex: 1, minWidth: '200px' }} />
           <input type="number" className="glass-input" placeholder="คะแนนเต็ม" value={maxScore} onChange={e => setMaxScore(e.target.value)} style={{ width: '120px' }} />

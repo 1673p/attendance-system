@@ -68,7 +68,6 @@ function ScoreReport({ user }) {
     if (!roomObj) return;
 
     const dataToExport = roomObj.students.map(s => {
-      // เอาคอลัมน์ระบบออกจากการ Export Excel ด้วย
       const rowData = { 
         รหัส: s.student_id, 
         ชื่อ: s.full_name
@@ -155,7 +154,7 @@ function ScoreReport({ user }) {
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       
-      {/* 📌 ควบคุม Layout ให้เรียงคนละบรรทัดเฉพาะบนมือถือ และจัดการตาราง */}
+      {/* 📌 ควบคุม Layout ให้เรียงคนละบรรทัดเฉพาะบนมือถือ และจัดการเส้นตารางให้ชัดเจน */}
       <style>{`
         .th-sticky-name {
           position: sticky;
@@ -167,6 +166,15 @@ function ScoreReport({ user }) {
           position: sticky;
           left: 100px;
           z-index: 5;
+        }
+
+        /* 📌 ปรับเส้นตารางให้ชัดเจนขึ้น */
+        .report-table th, 
+        .report-table td {
+          border: 1px solid #9ca3af !important; /* เส้นสีเทาเข้มขึ้น */
+        }
+        .report-table thead th {
+          border-bottom: 2px solid #6b7280 !important; /* เส้นใต้หัวตารางหนาและเข้มขึ้น */
         }
 
         @media (max-width: 600px) {
@@ -197,13 +205,15 @@ function ScoreReport({ user }) {
       
       {/* แก้ไขให้จัดเรียงแนวนอนบนคอมพิวเตอร์ และใส่ mobile-stack สำหรับมือถือ */}
       <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+        
+        {/* 📌 นำ disabled={user?.role !== 'admin'} ออก เพื่อให้ทุกคนดูของกันและกันได้ */}
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
           setSelectedRoomFilter('');
           setHasSearched(false);
           setScoresData([]);
-        }} disabled={user?.role !== 'admin'} style={{ minWidth: '150px' }}>
+        }} style={{ minWidth: '150px' }}>
             <option value="">-- เลือกอาจารย์ --</option>
             {teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}
         </select>
@@ -258,46 +268,41 @@ function ScoreReport({ user }) {
               <h4 style={{ margin: '20px 20px 15px 20px', color: '#FF1493', fontSize: '1.2rem', textAlign: 'center' }}>ห้องเรียน: {room}</h4>
               <div className="table-responsive" style={{ overflowX: 'auto', width: '100%', paddingBottom: '10px' }}>
                 
-                <table className="report-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+                <table className="report-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                   <thead>
                     <tr>
-                      <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center', minWidth: '100px' }}>รหัส</th>
-                      <th rowSpan="2" className="th-sticky-name" style={{ border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>ชื่อ-นามสกุล</th>
+                      <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center', minWidth: '100px' }}>รหัส</th>
+                      <th rowSpan="2" className="th-sticky-name" style={{ padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>ชื่อ-นามสกุล</th>
                       
-                      {/* --- ลบคอลัมน์ 'ระบบ' ออกแล้ว --- */}
-
                       {roomObj.assignmentCols.map((col, i) => (
-                        <th key={i} style={{ border: '1px solid #d1d5db', padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '120px' }}>
+                        <th key={i} style={{ padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '120px' }}>
                           {col.name} <br/> <small style={{ fontWeight: 'normal', color: '#6b7280' }}>({col.date})</small>
                         </th>
                       ))}
-                      <th colSpan="2" style={{ border: '1px solid #d1d5db', padding: '16px 15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
+                      <th colSpan="2" style={{ padding: '16px 15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
                     </tr>
                     <tr>
                       {roomObj.assignmentCols.map((col, i) => (
-                        <th key={i} style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontWeight: 'normal', fontSize: '13px', textAlign: 'center' }}>
+                        <th key={i} style={{ padding: '12px', backgroundColor: '#ffffff', fontWeight: 'normal', fontSize: '13px', textAlign: 'center' }}>
                           <span style={{ color: '#4b5563' }}>เต็ม {col.maxScore}</span>
                           <button onClick={() => handleDeleteBatch(col.createdAt)} style={{ display: 'block', margin: '8px auto 0', padding: '6px 15px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                             ลบ
                           </button>
                         </th>
                       ))}
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '80px' }}>รวม (เต็ม {roomTotalMax})</th>
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '80px' }}>ร้อยละ (%)</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '80px' }}>รวม (เต็ม {roomTotalMax})</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '80px' }}>ร้อยละ (%)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roomObj.students.map(s => (
-                      <tr key={s.student_id} style={{ borderBottom: '1px solid #e5e7eb', background: s.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
+                      <tr key={s.student_id} style={{ background: s.is_dual_voc ? '#f8fafc' : '#ffffff' }}>
                         
-                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
-                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
+                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
                         
-                        {/* --- ลบคอลัมน์ 'ระบบ' ออกแล้ว --- */}
-
                         {s.scoreColumns.map((val, i) => (
                           <td key={i} style={{ 
-                            border: '1px solid #e5e7eb', 
                             padding: '15px', 
                             textAlign: 'center', 
                             color: val === 'เป็นทวิภาคี' ? '#0284c7' : val === '-' ? '#9ca3af' : '#111827', 
@@ -311,10 +316,10 @@ function ScoreReport({ user }) {
                           </td>
                         ))}
                         
-                        <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', fontWeight: 'bold', color: s.totalEarned === '-' ? '#9ca3af' : '#2563eb', fontSize: '14px' }}>
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: s.totalEarned === '-' ? '#9ca3af' : '#2563eb', fontSize: '14px' }}>
                           {s.totalEarned}
                         </td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', fontWeight: 'bold', color: s.percentage === '-' ? '#9ca3af' : s.percentage >= 50 ? '#059669' : '#dc2626', fontSize: '14px' }}>
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: s.percentage === '-' ? '#9ca3af' : s.percentage >= 50 ? '#059669' : '#dc2626', fontSize: '14px' }}>
                           {s.percentage}{s.percentage !== '-' && '%'}
                         </td>
 

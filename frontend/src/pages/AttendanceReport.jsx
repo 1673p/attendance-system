@@ -144,7 +144,6 @@ function AttendanceReport({ user }) {
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       
-      {/* 📌 ควบคุม Layout ให้เป็น Column เฉพาะบนมือถือ */}
       <style>{`
         .th-sticky-name {
           position: sticky;
@@ -156,6 +155,15 @@ function AttendanceReport({ user }) {
           position: sticky;
           left: 100px;
           z-index: 5;
+        }
+
+        /* 📌 ปรับเส้นตารางให้ชัดเจนขึ้น */
+        .report-table th, 
+        .report-table td {
+          border: 1px solid #9ca3af !important; /* เปลี่ยนสีเส้นให้เข้มขึ้น */
+        }
+        .report-table thead th {
+          border-bottom: 2px solid #6b7280 !important; /* เส้นขอบล่างของหัวตารางให้หนาขึ้น */
         }
 
         @media (max-width: 600px) {
@@ -184,15 +192,16 @@ function AttendanceReport({ user }) {
 
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>สรุปผลการเช็คชื่อ</h2>
       
-      {/* แก้ไขให้กลับมาใช้ display: flex แนวนอน (flexWrap: wrap) ปกติบนจอคอม */}
       <div className="glass-panel mobile-stack" style={{ padding: '25px', marginBottom: '30px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+        
+        {/* 📌 นำ disabled={user?.role !== 'admin'} ออก เพื่อให้ทุกคนดูของกันและกันได้ */}
         <select className="glass-input" value={selectedTeacher} onChange={(e) => { 
           setSelectedTeacher(e.target.value); 
           setSelectedSubject(''); 
           setSelectedRoomFilter('');
           setHasSearched(false);
           setLogs([]);
-        }} disabled={user?.role !== 'admin'}>
+        }}>
             <option value="">-- เลือกอาจารย์ --</option>
             {teachers.map(t => <option key={t.teacher_code} value={t.teacher_code}>{t.full_name}</option>)}
         </select>
@@ -245,17 +254,17 @@ function AttendanceReport({ user }) {
               <h4 style={{ margin: '20px 20px 15px 20px', color: '#FF1493', fontSize: '1.2rem', textAlign: 'center' }}>ห้องเรียน: {room}</h4>
               <div className="table-responsive" style={{ overflowX: 'auto', width: '100%', paddingBottom: '10px' }}>
                 
-                <table className="report-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #e5e7eb' }}>
+                <table className="report-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                   <thead>
                     <tr>
-                      <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, minWidth: '100px', border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>รหัส</th>
+                      <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, minWidth: '100px', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>รหัส</th>
                       
-                      <th rowSpan="2" className="th-sticky-name" style={{ border: '1px solid #d1d5db', padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>ชื่อ-นามสกุล</th>
+                      <th rowSpan="2" className="th-sticky-name" style={{ padding: '16px 20px', backgroundColor: '#f9fafb', color: '#374151', verticalAlign: 'middle', textAlign: 'center' }}>ชื่อ-นามสกุล</th>
                       
                       {roomObj.dates.map((d, i) => {
                         const sampleLog = roomObj.students.find(s => s.dateColumns[i].createdAt)?.dateColumns[i];
                         return (
-                          <th key={d} rowSpan="2" style={{ border: '1px solid #d1d5db', padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '90px' }}>
+                          <th key={d} rowSpan="2" style={{ padding: '16px 15px', backgroundColor: '#eff6ff', color: '#1e3a8a', textAlign: 'center', minWidth: '90px' }}>
                             {d} <br/>
                             <small style={{ fontWeight: 'normal', color: '#6b7280' }}>({sampleLog?.batchTime || '-'})</small>
                             {sampleLog?.createdAt && (
@@ -266,24 +275,22 @@ function AttendanceReport({ user }) {
                           </th>
                         )
                       })}
-                      <th colSpan="2" style={{ border: '1px solid #d1d5db', padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
+                      <th colSpan="2" style={{ padding: '15px', backgroundColor: '#fdf2f8', color: '#9d174d', textAlign: 'center' }}>สรุปผล</th>
                     </tr>
                     <tr>
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>มา/ลา</th>
-                      <th style={{ border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>ขาด</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>มา/ลา</th>
+                      <th style={{ padding: '12px', backgroundColor: '#ffffff', fontSize: '13px', textAlign: 'center', color: '#4b5563', minWidth: '60px' }}>ขาด</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roomObj.students.map(s => (
-                      <tr key={s.student_id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <tr key={s.student_id}>
+                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
                         
-                        <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', textAlign: 'center', color: '#374151', fontWeight: 'bold' }}>{s.student_id}</td>
-                        
-                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
+                        <td className="td-sticky-name" style={{ backgroundColor: '#ffffff', padding: '15px 20px', color: '#374151' }}>{s.full_name}</td>
                         
                         {s.dateColumns.map((val, i) => (
                           <td key={i} style={{ 
-                            border: '1px solid #e5e7eb', 
                             padding: '15px', 
                             textAlign: 'center',
                             color: val.text === 'มา' ? '#059669' : val.text === 'ขาด' ? '#dc2626' : val.text === 'ลา' ? '#d97706' : val.text === 'เป็นทวิภาคี' ? '#0284c7' : '#9ca3af',
@@ -299,8 +306,8 @@ function AttendanceReport({ user }) {
                           </td>
                         ))}
                         
-                        <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#059669', fontSize: '14px' }}>{s.presentPercent}%</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#dc2626', fontSize: '14px' }}>{s.absentPercent}%</td>
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#059669', fontSize: '14px' }}>{s.presentPercent}%</td>
+                        <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold', color: '#dc2626', fontSize: '14px' }}>{s.absentPercent}%</td>
                       </tr>
                     ))}
                   </tbody>
