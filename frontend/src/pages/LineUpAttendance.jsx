@@ -3,22 +3,102 @@ import { supabase } from '../supabaseClient'
 import * as XLSX from 'xlsx';
 import '../App.css'
 
-// 📌 นำข้อมูลวันที่ 70 วันของคุณมาใส่ตรงนี้ได้เลยครับ
+// 📌 ข้อมูลวันที่ทั้งหมด
 const LINEUP_DATES = [
-  { date: '8/6/69', label: '8/6', full: 'จันทร์ 8/6/69', isHoliday: false }, { date: '9/6/69', label: '9/6', full: 'อังคาร 9/6/69', isHoliday: false }, { date: '10/6/69', label: '10/6', full: 'พุธ 10/6/69', isHoliday: false }, { date: '11/6/69', label: '11/6', full: 'พฤหัสบดี 11/6/69', isHoliday: false }, { date: '12/6/69', label: '12/6', full: 'ศุกร์ 12/6/69', isHoliday: false },
-  { date: '15/6/69', label: '15/6', full: 'จันทร์ 15/6/69', isHoliday: false }, { date: '16/6/69', label: '16/6', full: 'อังคาร 16/6/69', isHoliday: false }, { date: '17/6/69', label: '17/6', full: 'พุธ 17/6/69', isHoliday: false }, { date: '18/6/69', label: '18/6', full: 'พฤหัสบดี 18/6/69', isHoliday: false }, { date: '19/6/69', label: '19/6', full: 'ศุกร์ 19/6/69', isHoliday: false },
-  { date: '22/6/69', label: '22/6', full: 'จันทร์ 22/6/69', isHoliday: false }, { date: '23/6/69', label: '23/6', full: 'อังคาร 23/6/69', isHoliday: false }, { date: '24/6/69', label: '24/6', full: 'พุธ 24/6/69', isHoliday: false }, { date: '25/6/69', label: '25/6', full: 'พฤหัสบดี 25/6/69', isHoliday: false }, { date: '26/6/69', label: '26/6', full: 'ศุกร์ 26/6/69', isHoliday: false },
-  { date: '29/6/69', label: '29/6', full: 'จันทร์ 29/6/69', isHoliday: false }, { date: '30/6/69', label: '30/6', full: 'อังคาร 30/6/69', isHoliday: false }, { date: '1/7/69', label: '1/7', full: 'พุธ 1/7/69', isHoliday: false }, { date: '2/7/69', label: '2/7', full: 'พฤหัสบดี 2/7/69', isHoliday: false }, { date: '3/7/69', label: '3/7', full: 'ศุกร์ 3/7/69', isHoliday: false },
-  { date: '6/7/69', label: '6/7', full: 'จันทร์ 6/7/69', isHoliday: false }, { date: '7/7/69', label: '7/7', full: 'อังคาร 7/7/69', isHoliday: false }, { date: '8/7/69', label: '8/7', full: 'พุธ 8/7/69', isHoliday: false }, { date: '9/7/69', label: '9/7', full: 'พฤหัสบดี 9/7/69', isHoliday: false }, { date: '10/7/69', label: '10/7', full: 'ศุกร์ 10/7/69', isHoliday: false },
-  { date: '13/7/69', label: '13/7', full: 'จันทร์ 13/7/69', isHoliday: false }, { date: '14/7/69', label: '14/7', full: 'อังคาร 14/7/69', isHoliday: false }, { date: '15/7/69', label: '15/7', full: 'พุธ 15/7/69', isHoliday: false }, { date: '16/7/69', label: '16/7', full: 'พฤหัสบดี 16/7/69', isHoliday: false }, { date: '17/7/69', label: '17/7', full: 'ศุกร์ 17/7/69', isHoliday: false },
-  { date: '20/7/69', label: '20/7', full: 'จันทร์ 20/7/69', isHoliday: false }, { date: '21/7/69', label: '21/7', full: 'อังคาร 21/7/69', isHoliday: false }, { date: '22/7/69', label: '22/7', full: 'พุธ 22/7/69', isHoliday: false }, { date: '23/7/69', label: '23/7', full: 'พฤหัสบดี 23/7/69', isHoliday: false }, { date: '24/7/69', label: '24/7', full: 'ศุกร์ 24/7/69', isHoliday: false },
-  { date: '27/7/69', label: '27/7', full: 'จันทร์ 27/7/69', isHoliday: false }, { date: '28/7/69', label: '28/7', full: 'อังคาร 28/7/69', isHoliday: true, note: 'วันเฉลิมฯ' }, { date: '29/7/69', label: '29/7', full: 'พุธ 29/7/69', isHoliday: true, note: 'อาสาฬหบูชา' }, { date: '30/7/69', label: '30/7', full: 'พฤหัสบดี 30/7/69', isHoliday: false }, { date: '31/7/69', label: '31/7', full: 'ศุกร์ 31/7/69', isHoliday: false },
-  { date: '3/8/69', label: '3/8', full: 'จันทร์ 3/8/69', isHoliday: false }, { date: '4/8/69', label: '4/8', full: 'อังคาร 4/8/69', isHoliday: false }, { date: '5/8/69', label: '5/8', full: 'พุธ 5/8/69', isHoliday: false }, { date: '6/8/69', label: '6/8', full: 'พฤหัสบดี 6/8/69', isHoliday: false }, { date: '7/8/69', label: '7/8', full: 'ศุกร์ 7/8/69', isHoliday: false },
-  { date: '10/8/69', label: '10/8', full: 'จันทร์ 10/8/69', isHoliday: false }, { date: '11/8/69', label: '11/8', full: 'อังคาร 11/8/69', isHoliday: false }, { date: '12/8/69', label: '12/8', full: 'พุธ 12/8/69', isHoliday: true, note: 'วันแม่' }, { date: '13/8/69', label: '13/8', full: 'พฤหัสบดี 13/8/69', isHoliday: false }, { date: '14/8/69', label: '14/8', full: 'ศุกร์ 14/8/69', isHoliday: false },
-  { date: '17/8/69', label: '17/8', full: 'จันทร์ 17/8/69', isHoliday: false }, { date: '18/8/69', label: '18/8', full: 'อังคาร 18/8/69', isHoliday: false }, { date: '19/8/69', label: '19/8', full: 'พุธ 19/8/69', isHoliday: false }, { date: '20/8/69', label: '20/8', full: 'พฤหัสบดี 20/8/69', isHoliday: false }, { date: '21/8/69', label: '21/8', full: 'ศุกร์ 21/8/69', isHoliday: false },
-  { date: '24/8/69', label: '24/8', full: 'จันทร์ 24/8/69', isHoliday: false }, { date: '25/8/69', label: '25/8', full: 'อังคาร 25/8/69', isHoliday: false }, { date: '26/8/69', label: '26/8', full: 'พุธ 26/8/69', isHoliday: false }, { date: '27/8/69', label: '27/8', full: 'พฤหัสบดี 27/8/69', isHoliday: false }, { date: '28/8/69', label: '28/8', full: 'ศุกร์ 28/8/69', isHoliday: false },
-  { date: '31/8/69', label: '31/8', full: 'จันทร์ 31/8/69', isHoliday: false }, { date: '1/9/69', label: '1/9', full: 'อังคาร 1/9/69', isHoliday: false }, { date: '2/9/69', label: '2/9', full: 'พุธ 2/9/69', isHoliday: false }, { date: '3/9/69', label: '3/9', full: 'พฤหัสบดี 3/9/69', isHoliday: false }, { date: '4/9/69', label: '4/9', full: 'ศุกร์ 4/9/69', isHoliday: false },
-  { date: '7/9/69', label: '7/9', full: 'จันทร์ 7/9/69', isHoliday: false }, { date: '8/9/69', label: '8/9', full: 'อังคาร 8/9/69', isHoliday: false }, { date: '9/9/69', label: '9/9', full: 'พุธ 9/9/69', isHoliday: false }, { date: '10/9/69', label: '10/9', full: 'พฤหัสบดี 10/9/69', isHoliday: false }, { date: '11/9/69', label: '11/9', full: 'ศุกร์ 11/9/69', isHoliday: false },
+  // --- เดือนพฤษภาคม 2569 ---
+  { date: '18/5/69', label: '18/5', full: 'จันทร์ 18/5/69', isHoliday: false },
+  { date: '19/5/69', label: '19/5', full: 'อังคาร 19/5/69', isHoliday: false },
+  { date: '20/5/69', label: '20/5', full: 'พุธ 20/5/69', isHoliday: false },
+  { date: '21/5/69', label: '21/5', full: 'พฤหัสบดี 21/5/69', isHoliday: false },
+  { date: '22/5/69', label: '22/5', full: 'ศุกร์ 22/5/69', isHoliday: false },
+  { date: '25/5/69', label: '25/5', full: 'จันทร์ 25/5/69', isHoliday: false },
+  { date: '26/5/69', label: '26/5', full: 'อังคาร 26/5/69', isHoliday: false },
+  { date: '27/5/69', label: '27/5', full: 'พุธ 27/5/69', isHoliday: false },
+  { date: '28/5/69', label: '28/5', full: 'พฤหัสบดี 28/5/69', isHoliday: false },
+  { date: '29/5/69', label: '29/5', full: 'ศุกร์ 29/5/69', isHoliday: false },
+
+  // --- เดือนมิถุนายน 2569 ---
+  { date: '1/6/69', label: '1/6', full: 'จันทร์ 1/6/69', isHoliday: true, note: 'ชดเชยวิสาขฯ' },
+  { date: '2/6/69', label: '2/6', full: 'อังคาร 2/6/69', isHoliday: false },
+  { date: '3/6/69', label: '3/6', full: 'พุธ 3/6/69', isHoliday: true, note: 'วันเฉลิมฯ ควีน' },
+  { date: '4/6/69', label: '4/6', full: 'พฤหัสบดี 4/6/69', isHoliday: false },
+  { date: '5/6/69', label: '5/6', full: 'ศุกร์ 5/6/69', isHoliday: false },
+  { date: '8/6/69', label: '8/6', full: 'จันทร์ 8/6/69', isHoliday: false }, 
+  { date: '9/6/69', label: '9/6', full: 'อังคาร 9/6/69', isHoliday: false }, 
+  { date: '10/6/69', label: '10/6', full: 'พุธ 10/6/69', isHoliday: false }, 
+  { date: '11/6/69', label: '11/6', full: 'พฤหัสบดี 11/6/69', isHoliday: false }, 
+  { date: '12/6/69', label: '12/6', full: 'ศุกร์ 12/6/69', isHoliday: false },
+  { date: '15/6/69', label: '15/6', full: 'จันทร์ 15/6/69', isHoliday: false }, 
+  { date: '16/6/69', label: '16/6', full: 'อังคาร 16/6/69', isHoliday: false }, 
+  { date: '17/6/69', label: '17/6', full: 'พุธ 17/6/69', isHoliday: false }, 
+  { date: '18/6/69', label: '18/6', full: 'พฤหัสบดี 18/6/69', isHoliday: false }, 
+  { date: '19/6/69', label: '19/6', full: 'ศุกร์ 19/6/69', isHoliday: false },
+  { date: '22/6/69', label: '22/6', full: 'จันทร์ 22/6/69', isHoliday: false }, 
+  { date: '23/6/69', label: '23/6', full: 'อังคาร 23/6/69', isHoliday: false }, 
+  { date: '24/6/69', label: '24/6', full: 'พุธ 24/6/69', isHoliday: false }, 
+  { date: '25/6/69', label: '25/6', full: 'พฤหัสบดี 25/6/69', isHoliday: false }, 
+  { date: '26/6/69', label: '26/6', full: 'ศุกร์ 26/6/69', isHoliday: false },
+  { date: '29/6/69', label: '29/6', full: 'จันทร์ 29/6/69', isHoliday: false }, 
+  { date: '30/6/69', label: '30/6', full: 'อังคาร 30/6/69', isHoliday: false }, 
+
+  // --- เดือนกรกฎาคม 2569 ---
+  { date: '1/7/69', label: '1/7', full: 'พุธ 1/7/69', isHoliday: false }, 
+  { date: '2/7/69', label: '2/7', full: 'พฤหัสบดี 2/7/69', isHoliday: false }, 
+  { date: '3/7/69', label: '3/7', full: 'ศุกร์ 3/7/69', isHoliday: false },
+  { date: '6/7/69', label: '6/7', full: 'จันทร์ 6/7/69', isHoliday: false }, 
+  { date: '7/7/69', label: '7/7', full: 'อังคาร 7/7/69', isHoliday: false }, 
+  { date: '8/7/69', label: '8/7', full: 'พุธ 8/7/69', isHoliday: false }, 
+  { date: '9/7/69', label: '9/7', full: 'พฤหัสบดี 9/7/69', isHoliday: false }, 
+  { date: '10/7/69', label: '10/7', full: 'ศุกร์ 10/7/69', isHoliday: false },
+  { date: '13/7/69', label: '13/7', full: 'จันทร์ 13/7/69', isHoliday: false }, 
+  { date: '14/7/69', label: '14/7', full: 'อังคาร 14/7/69', isHoliday: false }, 
+  { date: '15/7/69', label: '15/7', full: 'พุธ 15/7/69', isHoliday: false }, 
+  { date: '16/7/69', label: '16/7', full: 'พฤหัสบดี 16/7/69', isHoliday: false }, 
+  { date: '17/7/69', label: '17/7', full: 'ศุกร์ 17/7/69', isHoliday: false },
+  { date: '20/7/69', label: '20/7', full: 'จันทร์ 20/7/69', isHoliday: false }, 
+  { date: '21/7/69', label: '21/7', full: 'อังคาร 21/7/69', isHoliday: false }, 
+  { date: '22/7/69', label: '22/7', full: 'พุธ 22/7/69', isHoliday: false }, 
+  { date: '23/7/69', label: '23/7', full: 'พฤหัสบดี 23/7/69', isHoliday: false }, 
+  { date: '24/7/69', label: '24/7', full: 'ศุกร์ 24/7/69', isHoliday: false },
+  { date: '27/7/69', label: '27/7', full: 'จันทร์ 27/7/69', isHoliday: false }, 
+  { date: '28/7/69', label: '28/7', full: 'อังคาร 28/7/69', isHoliday: true, note: 'วันเฉลิมฯ' }, 
+  { date: '29/7/69', label: '29/7', full: 'พุธ 29/7/69', isHoliday: true, note: 'อาสาฬหบูชา' }, 
+  { date: '30/7/69', label: '30/7', full: 'พฤหัสบดี 30/7/69', isHoliday: false }, 
+  { date: '31/7/69', label: '31/7', full: 'ศุกร์ 31/7/69', isHoliday: false },
+
+  // --- เดือนสิงหาคม 2569 ---
+  { date: '3/8/69', label: '3/8', full: 'จันทร์ 3/8/69', isHoliday: false }, 
+  { date: '4/8/69', label: '4/8', full: 'อังคาร 4/8/69', isHoliday: false }, 
+  { date: '5/8/69', label: '5/8', full: 'พุธ 5/8/69', isHoliday: false }, 
+  { date: '6/8/69', label: '6/8', full: 'พฤหัสบดี 6/8/69', isHoliday: false }, 
+  { date: '7/8/69', label: '7/8', full: 'ศุกร์ 7/8/69', isHoliday: false },
+  { date: '10/8/69', label: '10/8', full: 'จันทร์ 10/8/69', isHoliday: false }, 
+  { date: '11/8/69', label: '11/8', full: 'อังคาร 11/8/69', isHoliday: false }, 
+  { date: '12/8/69', label: '12/8', full: 'พุธ 12/8/69', isHoliday: true, note: 'วันแม่' }, 
+  { date: '13/8/69', label: '13/8', full: 'พฤหัสบดี 13/8/69', isHoliday: false }, 
+  { date: '14/8/69', label: '14/8', full: 'ศุกร์ 14/8/69', isHoliday: false },
+  { date: '17/8/69', label: '17/8', full: 'จันทร์ 17/8/69', isHoliday: false }, 
+  { date: '18/8/69', label: '18/8', full: 'อังคาร 18/8/69', isHoliday: false }, 
+  { date: '19/8/69', label: '19/8', full: 'พุธ 19/8/69', isHoliday: false }, 
+  { date: '20/8/69', label: '20/8', full: 'พฤหัสบดี 20/8/69', isHoliday: false }, 
+  { date: '21/8/69', label: '21/8', full: 'ศุกร์ 21/8/69', isHoliday: false },
+  { date: '24/8/69', label: '24/8', full: 'จันทร์ 24/8/69', isHoliday: false }, 
+  { date: '25/8/69', label: '25/8', full: 'อังคาร 25/8/69', isHoliday: false }, 
+  { date: '26/8/69', label: '26/8', full: 'พุธ 26/8/69', isHoliday: false }, 
+  { date: '27/8/69', label: '27/8', full: 'พฤหัสบดี 27/8/69', isHoliday: false }, 
+  { date: '28/8/69', label: '28/8', full: 'ศุกร์ 28/8/69', isHoliday: false },
+  { date: '31/8/69', label: '31/8', full: 'จันทร์ 31/8/69', isHoliday: false }, 
+
+  // --- เดือนกันยายน 2569 ---
+  { date: '1/9/69', label: '1/9', full: 'อังคาร 1/9/69', isHoliday: false }, 
+  { date: '2/9/69', label: '2/9', full: 'พุธ 2/9/69', isHoliday: false }, 
+  { date: '3/9/69', label: '3/9', full: 'พฤหัสบดี 3/9/69', isHoliday: false }, 
+  { date: '4/9/69', label: '4/9', full: 'ศุกร์ 4/9/69', isHoliday: false },
+  { date: '7/9/69', label: '7/9', full: 'จันทร์ 7/9/69', isHoliday: false }, 
+  { date: '8/9/69', label: '8/9', full: 'อังคาร 8/9/69', isHoliday: false }, 
+  { date: '9/9/69', label: '9/9', full: 'พุธ 9/9/69', isHoliday: false }, 
+  { date: '10/9/69', label: '10/9', full: 'พฤหัสบดี 10/9/69', isHoliday: false }, 
+  { date: '11/9/69', label: '11/9', full: 'ศุกร์ 11/9/69', isHoliday: false },
 ];
 
 const TOTAL_WORK_DAYS = LINEUP_DATES.filter(d => !d.isHoliday).length;
@@ -82,6 +162,32 @@ function LineUpAttendance({ user }) {
     }));
   };
 
+  // 📌 ฟังก์ชันจัดการ Check All ของแต่ละคอลัมน์ (วัน) พร้อมรองรับตัวเลือก '-' เพื่อรีเซ็ต
+  const handleColumnCheckAll = (date, status) => {
+    if (!status) return;
+
+    if (status === 'ไม่มีเรียน') {
+      if (!window.confirm(`ยืนยันการตั้งค่า "ไม่มีเรียน" ให้ทุกคนในวันที่ ${date} ใช่หรือไม่?`)) return;
+    }
+    
+    // 📌 ยืนยันก่อนรีเซ็ตสถานะทั้งหมดในวันนั้น
+    if (status === '-') {
+      if (!window.confirm(`ยืนยันการล้างข้อมูล (รีเซ็ตเป็น -) ให้ทุกคนในวันที่ ${date} ใช่หรือไม่?`)) return;
+    }
+
+    setAttendanceData(prev => {
+      const newData = { ...prev };
+      filteredStudents.forEach(stu => {
+        if (!stu.is_dual_voc) {
+          if (!newData[stu.student_id]) newData[stu.student_id] = {};
+          // ถ้าเลือก '-' ให้ปรับเป็นค่าว่าง
+          newData[stu.student_id][date] = status === '-' ? '' : status;
+        }
+      });
+      return newData;
+    });
+  };
+
   const handleSave = async () => {
     if (!selectedRoom) return alert("กรุณาเลือกห้องเรียน");
     setLoading(true);
@@ -138,7 +244,7 @@ function LineUpAttendance({ user }) {
           } else {
             const status = attendanceData[stu.student_id]?.[d.date] || '';
             row[d.date] = status || '-';
-            if (status === 'มา') present++;
+            if (status === 'มา' || status === 'ไม่มีเรียน') present++;
             if (status === 'ขาด') absent++;
           }
         });
@@ -161,7 +267,6 @@ function LineUpAttendance({ user }) {
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
       <h2 className="text-gradient" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem' }}>ระบบเช็คแถวหน้าเสาธง</h2>
 
-      {/* เพิ่ม className="score-filters" เพื่อให้จัดเรียงลงมาทีละบรรทัดเฉพาะบนมือถือ */}
       <div className="glass-panel score-filters" style={{ padding: '25px', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontWeight: 'bold' }}>เลือกห้องเพื่อลงข้อมูล:</span>
         
@@ -180,7 +285,6 @@ function LineUpAttendance({ user }) {
 
         {selectedRoom && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', width: '100%' }}>
-             {/* ให้ปุ่ม Export ขยายเต็มในมือถือ */}
              <button onClick={handleExportExcel} className="btn-success" style={{ padding: '10px 20px', borderRadius: '8px', flex: 1 }}>Export Excel</button>
           </div>
         )}
@@ -194,15 +298,36 @@ function LineUpAttendance({ user }) {
             <table className="report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e5e7eb' }}>
               <thead>
                 <tr>
-                  {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
                   <th rowSpan="2" className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '80px' }}>รหัส</th>
-                  
-                  {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย th-sticky-name */}
                   <th rowSpan="2" className="th-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 10, border: '1px solid #d1d5db', padding: '12px', backgroundColor: '#f9fafb', color: '#374151', textAlign: 'center', minWidth: '200px' }}>ชื่อ-นามสกุล</th>
                   
                   {LINEUP_DATES.map((d, i) => (
-                    <th key={i} style={{ border: '1px solid #d1d5db', padding: '6px', backgroundColor: d.isHoliday ? '#fecaca' : '#eff6ff', color: d.isHoliday ? '#991b1b' : '#1e3a8a', textAlign: 'center', minWidth: '60px' }}>
-                      {d.label}
+                    <th key={i} style={{ border: '1px solid #d1d5db', padding: '6px', backgroundColor: d.isHoliday ? '#fecaca' : '#eff6ff', color: d.isHoliday ? '#991b1b' : '#1e3a8a', textAlign: 'center', minWidth: '70px', verticalAlign: 'top' }}>
+                      <div style={{ marginBottom: '4px' }}>{d.label}</div>
+                      {!d.isHoliday && (
+                        <select 
+                          title="เลือกให้ทุกคนในวันนี้"
+                          onChange={(e) => {
+                            handleColumnCheckAll(d.date, e.target.value);
+                            e.target.value = ""; 
+                          }}
+                          style={{
+                            width: '100%',
+                            fontSize: '10px',
+                            padding: '2px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            cursor: 'pointer',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <option value="">ทั้งหมด▾</option>
+                          <option value="มา">มา</option>
+                          <option value="ขาด">ขาด</option>
+                          <option value="ไม่มีเรียน">ไม่มีเรียน</option>
+                          <option value="-">- (ล้างข้อมูล)</option>
+                        </select>
+                      )}
                     </th>
                   ))}
                   
@@ -224,16 +349,11 @@ function LineUpAttendance({ user }) {
               </thead>
               <tbody>
                 {filteredStudents.map(stu => {
-                  
                   if (stu.is_dual_voc) {
                     return (
                       <tr key={stu.student_id} style={{ borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
-                        {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
                         <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#64748b' }}>{stu.student_id}</td>
-                        
-                        {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย td-sticky-name */}
                         <td className="td-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#f8fafc', border: '1px solid #e5e7eb', padding: '10px', color: '#64748b', fontWeight: '500' }}>{stu.full_name}</td>
-                        
                         <td colSpan={LINEUP_DATES.length + 3} style={{ border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', fontWeight: 'bold' }}>
                            นักเรียนระบบทวิภาคี (ไม่ต้องเช็คแถว)
                         </td>
@@ -246,10 +366,7 @@ function LineUpAttendance({ user }) {
 
                   return (
                     <tr key={stu.student_id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      {/* ซ่อนรหัสบนมือถือด้วย hide-on-mobile */}
                       <td className="hide-on-mobile" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', textAlign: 'center', color: '#374151' }}>{stu.student_id}</td>
-                      
-                      {/* บีบความกว้างและขยับซ้ายบนมือถือด้วย td-sticky-name */}
                       <td className="td-sticky-name" style={{ position: 'sticky', left: '80px', zIndex: 5, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', padding: '10px', color: '#374151', fontWeight: '500' }}>{stu.full_name}</td>
                       
                       {LINEUP_DATES.map((d, i) => {
@@ -258,7 +375,8 @@ function LineUpAttendance({ user }) {
                         }
 
                         const status = attendanceData[stu.student_id]?.[d.date] || '';
-                        if (status === 'มา') presentCount++;
+                        
+                        if (status === 'มา' || status === 'ไม่มีเรียน') presentCount++;
                         if (status === 'ขาด') absentCount++;
 
                         return (
@@ -266,11 +384,23 @@ function LineUpAttendance({ user }) {
                             <select 
                               value={status} 
                               onChange={(e) => handleStatusChange(stu.student_id, d.date, e.target.value)}
-                              style={{ width: '100%', minWidth: '45px', padding: '4px 0', fontSize: '12px', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: status === 'มา' ? '#d1fae5' : status === 'ขาด' ? '#fee2e2' : '#ffffff', color: status === 'มา' ? '#065f46' : status === 'ขาด' ? '#991b1b' : '#333' }}
+                              style={{ 
+                                width: '100%', 
+                                minWidth: '55px', 
+                                padding: '4px 0', 
+                                fontSize: '12px', 
+                                textAlign: 'center', 
+                                borderRadius: '4px', 
+                                border: '1px solid #cbd5e1', 
+                                backgroundColor: status === 'มา' ? '#d1fae5' : status === 'ขาด' ? '#fee2e2' : status === 'ไม่มีเรียน' ? '#ede9fe' : '#ffffff', 
+                                color: status === 'มา' ? '#065f46' : status === 'ขาด' ? '#991b1b' : status === 'ไม่มีเรียน' ? '#7c3aed' : '#333',
+                                fontWeight: status ? 'bold' : 'normal'
+                              }}
                             >
                               <option value="">-</option>
                               <option value="มา">มา</option>
                               <option value="ขาด">ขาด</option>
+                              <option value="ไม่มีเรียน">ไม่มีเรียน</option>
                             </select>
                           </td>
                         )
